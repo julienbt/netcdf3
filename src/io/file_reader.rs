@@ -1,5 +1,6 @@
 mod tests_file_reader;
 
+use std::fmt::Debug;
 use std::convert::TryFrom;
 use std::rc::Rc;
 use std::io::{Read, Seek, SeekFrom};
@@ -45,6 +46,8 @@ use crate::{
     io::{compute_padding_size, Offset, ABSENT_TAG, DIMENSION_TAG, VARIABLE_TAG, ATTRIBUTE_TAG},
 };
 
+pub trait SeekRead: Seek + Read {}
+impl<T: Seek + Read> SeekRead for T {}
 
 /// Allows to read NetCDF-3 files (the *classic* and the *64-bit offset* versions).
 ///
@@ -210,8 +213,16 @@ pub struct FileReader {
     data_set: DataSet,
     version: Version,
     input_file_path: PathBuf,
-    input_file: std::fs::File,
+    input_file: Box<dyn SeekRead>,
     vars_info: Vec<VariableParsedMetadata>
+}
+
+impl Debug for dyn SeekRead
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error>
+    {
+        write!(f, "{:p}", self)
+    }
 }
 
 macro_rules! impl_read_typed_var {
@@ -270,18 +281,38 @@ impl FileReader {
         return &self.input_file_path;
     }
 
+    pub fn open_seek_read(input_file_name: &str, mut input_file: Box<dyn SeekRead>) -> Result<Self, ReadError>
+    {
+        let input_file_path: PathBuf = PathBuf::from(input_file_name);
+
+        // determine length as in use https://doc.rust-lang.org/stable/src/std/io/mod.rs.html#1871-1882
+        let pos = input_file.stream_position()?;
+        let len = input_file.seek(SeekFrom::End(0))?;
+        if pos != len {
+            input_file.seek(SeekFrom::Start(pos))?;
+        }
+
+        Self::read_header(input_file_path, input_file, len)
+    }
+
     /// Opens the file and parses the header of the NetCDF-3.
     pub fn open<P: AsRef<Path>>(input_file_path: P) -> Result<Self, ReadError>
     {
-        const BUFFER_SIZE: usize = 1024;
-        // Open the file
         let input_file_path: PathBuf = {
             let mut path = PathBuf::new();
             path.push(input_file_path);
             path
         };
-        let mut input_file = std::fs::File::open(input_file_path.clone())?;
-        let file_size: usize = std::fs::metadata(&input_file_path)?.len() as usize; 
+        let input_file: Box<dyn SeekRead> = Box::new(std::fs::File::open(input_file_path.clone())?);
+        let file_size = std::fs::metadata(&input_file_path)?.len(); 
+
+        Self::read_header(input_file_path, input_file, file_size)
+    }
+    
+    /// Opens the file and parses the header of the NetCDF-3.
+    fn read_header(input_file_path: PathBuf, mut input_file: Box<dyn SeekRead>, file_size: u64) -> Result<Self, ReadError>
+    {
+        const BUFFER_SIZE: usize = 1024;
         
         // Parse the header
         let (data_set, version, vars_info): (DataSet, Version, Vec<VariableParsedMetadata>) = {
@@ -290,14 +321,15 @@ impl FileReader {
             loop {
                 // Load bytes
                 let old_buf_start: usize = buffer.len();
-                let new_buf_size: usize = std::cmp::min(buffer.len() + BUFFER_SIZE, file_size);
+                let new_buf_size: usize = std::cmp::min((buffer.len() + BUFFER_SIZE) as u64, file_size) as usize;
                 let start: &usize = &old_buf_start;
                 let end: &usize = &new_buf_size;
                 buffer.resize(new_buf_size, 0_u8);
                 let _num_of_bytes = input_file.read(&mut buffer[*start..*end])?;
 
                 let parsing_result: Result<(DataSet, Version, Vec<VariableParsedMetadata>), ReadError>;
-                parsing_result = FileReader::parse_header(&buffer, file_size);
+                // TODO: do not cast file_size to usize, instead make parse_header() work with u64
+                parsing_result = FileReader::parse_header(&buffer, file_size as usize);
                 match parsing_result {
                     Ok((data_set_2, version_2, vars_info_2)) => {
                         data_set = data_set_2;
@@ -307,7 +339,7 @@ impl FileReader {
                     },
                     Err(read_err) => {
                         if read_err.header_is_incomplete() {
-                            let buf_size: usize = buffer.len();
+                            let buf_size: u64 = buffer.len() as u64;
                             if buf_size < file_size {
                                 // nothing to do
                             }
