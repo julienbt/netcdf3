@@ -49,7 +49,8 @@ pub use data_set::NC_MAX_DIM_SIZE;
 pub use data_set::NC_MAX_VAR_DIMS;
 
 mod io;
-pub use io::{FileReader, FileWriter};
+pub use io::{FileReader, SeekRead};
+pub use io::FileWriter;
 
 mod version;
 pub use version::Version;

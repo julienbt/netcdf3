@@ -2,7 +2,7 @@
 
 use crate::{
     DataSet, Version,
-    FileReader,
+    FileReader, io::file_reader::SeekRead,
 };
 
 use super::ComputedDataSetMetadata;
@@ -20,7 +20,7 @@ fn test_compute_header_required_size() {
     let (data_set, version): (DataSet, Version) = {
         let (tmp_dir, input_data_file_path) = copy_bytes_to_tmp_file(NC3_CLASSIC_FILE_BYTES, NC3_CLASSIC_FILE_NAME);
         let file_reader = FileReader::open(input_data_file_path).unwrap();
-        let (data_set, version): (DataSet, Version) = file_reader.close();
+        let (data_set, version, _input_cursor): (DataSet, Version, Box<dyn SeekRead>) = file_reader.close();
         tmp_dir.close().unwrap();
         (data_set, version)
     };

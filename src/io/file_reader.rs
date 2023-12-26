@@ -1,6 +1,6 @@
 mod tests_file_reader;
 
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::rc::Rc;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
@@ -44,6 +44,18 @@ use crate::{
     error::parse_header_error::{ParseHeaderError, ParseHeaderErrorKind, NomError},
     io::{compute_padding_size, Offset, ABSENT_TAG, DIMENSION_TAG, VARIABLE_TAG, ATTRIBUTE_TAG},
 };
+
+pub trait SeekRead: Seek + Read {}
+impl<T: Seek + Read> SeekRead for T {}
+
+impl std::fmt::Debug for dyn SeekRead
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error>
+    {
+        write!(f, "{:p}", self)
+    }
+}
+
 
 
 /// Allows to read NetCDF-3 files (the *classic* and the *64-bit offset* versions).
@@ -210,7 +222,7 @@ pub struct FileReader {
     data_set: DataSet,
     version: Version,
     input_file_path: PathBuf,
-    input_file: std::fs::File,
+    input_file: Box<dyn SeekRead>,
     vars_info: Vec<VariableParsedMetadata>
 }
 
@@ -273,16 +285,39 @@ impl FileReader {
     /// Opens the file and parses the header of the NetCDF-3.
     pub fn open<P: AsRef<Path>>(input_file_path: P) -> Result<Self, ReadError>
     {
-        const BUFFER_SIZE: usize = 1024;
-        // Open the file
         let input_file_path: PathBuf = {
             let mut path = PathBuf::new();
             path.push(input_file_path);
             path
         };
-        let mut input_file = std::fs::File::open(input_file_path.clone())?;
+        // Open the file
+        let input_file: Box<dyn SeekRead> = {
+            let input_file = std::fs::File::open(input_file_path.clone())?;
+            Box::new(input_file)
+        };
         let file_size: usize = std::fs::metadata(&input_file_path)?.len() as usize; 
-        
+        Self::read_header(input_file_path, input_file, file_size)
+    }
+
+
+    pub fn read_bytes(input_file_name: &str, mut input_file: Box<dyn SeekRead>) -> Result<Self, ReadError>
+    {
+        let input_file_path: PathBuf = PathBuf::from(input_file_name);
+
+        // determine length as in use https://doc.rust-lang.org/stable/src/std/io/mod.rs.html#1871-1882
+        let position: u64 = input_file.stream_position()?;
+        let file_size: u64 = input_file.seek(SeekFrom::End(0))?;
+        if position != file_size {
+            input_file.seek(SeekFrom::Start(position))?;
+        }
+
+        let file_size: usize = file_size.try_into().map_err(|_err| ReadError::Unexpected)?;
+
+        Self::read_header(input_file_path, input_file, file_size as usize)
+    }
+
+    fn read_header(input_file_path: PathBuf, mut input_file: Box<dyn SeekRead>, file_size: usize) -> Result<Self, ReadError> {
+        const BUFFER_SIZE: usize = 1024;
         // Parse the header
         let (data_set, version, vars_info): (DataSet, Version, Vec<VariableParsedMetadata>) = {
             let mut buffer: Vec<u8> = vec![];
@@ -335,8 +370,8 @@ impl FileReader {
     }
 
     /// Closes the file and releases the data set and the file version.
-    pub fn close(self) -> (DataSet, Version) {
-        (self.data_set, self.version)
+    pub fn close(self) -> (DataSet, Version, Box<dyn SeekRead>) {
+        (self.data_set, self.version, self.input_file)
     }
 
     /// Allows to read all variable data easily.

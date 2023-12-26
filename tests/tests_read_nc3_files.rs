@@ -16,6 +16,7 @@ use netcdf3::{
     DataSet, Variable, DataType, Version,
     Dimension, DimensionType,
     error::ReadError,
+    SeekRead,
 };
 use netcdf3::NC_FILL_I8;
 use netcdf3::NC_FILL_U8;
@@ -752,7 +753,7 @@ fn test_read_file_zero_sized_unlimited_dim() {
     let file_reader = FileReader::open(input_data_file_path).unwrap();
     // Check the NetCDF-3 definition
     // -----------------------------
-    let (data_set, version): (DataSet, Version) = file_reader.close();
+    let (data_set, version, _input_bytes): (DataSet, Version, Box<dyn SeekRead>) = file_reader.close();
 
     assert_eq!(Version::Classic,                    version);
     assert_eq!(0,                                   data_set.num_global_attrs());

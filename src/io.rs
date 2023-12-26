@@ -4,7 +4,7 @@ mod file_reader;
 mod file_writer;
 mod tests_io;
 
-pub use file_reader::FileReader;
+pub use file_reader::{FileReader, SeekRead};
 pub use file_writer::FileWriter;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
