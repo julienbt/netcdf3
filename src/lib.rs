@@ -25,7 +25,7 @@
 //!
 //! [File_Format_Specs]: https://www.unidata.ucar.edu/software/netcdf/docs/file_format_specifications.html
 pub mod error;
-pub use error::{ReadError, WriteError, InvalidDataSet};
+pub use error::{InvalidDataSet, ReadError, WriteError};
 
 mod name_string;
 pub use name_string::is_valid_name;
@@ -38,15 +38,15 @@ mod data_vector;
 pub use data_vector::DataVector;
 
 mod data_set;
-pub use data_set::{Attribute, DataSet, Dimension, DimensionType, Variable};
-pub use data_set::NC_FILL_I8;
-pub use data_set::NC_FILL_U8;
-pub use data_set::NC_FILL_I16;
-pub use data_set::NC_FILL_I32;
 pub use data_set::NC_FILL_F32;
 pub use data_set::NC_FILL_F64;
+pub use data_set::NC_FILL_I16;
+pub use data_set::NC_FILL_I32;
+pub use data_set::NC_FILL_I8;
+pub use data_set::NC_FILL_U8;
 pub use data_set::NC_MAX_DIM_SIZE;
 pub use data_set::NC_MAX_VAR_DIMS;
+pub use data_set::{Attribute, DataSet, Dimension, DimensionType, Variable};
 
 mod io;
 pub use io::{FileReader, FileWriter};

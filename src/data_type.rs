@@ -13,7 +13,6 @@ const F32_TYPE_C_API_NAME: &'static str = "NC_FLOAT";
 /// Name of the `DataType::F64` (a.k.a. `NC_DOUBLE`) used in the NetCDF C-API.
 const F64_TYPE_C_API_NAME: &'static str = "NC_DOUBLE";
 
-
 /// All the data types supported by the NetCDF-3 format
 ///
 /// # Example
@@ -53,16 +52,19 @@ pub enum DataType {
 }
 
 impl std::fmt::Display for DataType {
-
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "DataType::{}", match self {
-            DataType::I8 => "I8",
-            DataType::U8 => "U8",
-            DataType::I16 => "I16",
-            DataType::I32 => "I32",
-            DataType::F32 => "F32",
-            DataType::F64 => "F64",
-        })
+        write!(
+            f,
+            "DataType::{}",
+            match self {
+                DataType::I8 => "I8",
+                DataType::U8 => "U8",
+                DataType::I16 => "I16",
+                DataType::I32 => "I32",
+                DataType::F32 => "F32",
+                DataType::F64 => "F64",
+            }
+        )
     }
 }
 
@@ -82,7 +84,6 @@ impl std::convert::TryFrom<u32> for DataType {
 }
 
 impl DataType {
-
     /// Returns the size (in bytes) of one element of `DataType`.
     ///
     /// # Example
@@ -106,7 +107,6 @@ impl DataType {
             DataType::F64 => std::mem::size_of::<f64>(),
         }
     }
-
 
     /// Returns the name of the `DataType` commoly used in the NedCDF C API.
     ///

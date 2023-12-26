@@ -8,16 +8,13 @@ use std::path::Path;
 
 use tempdir::TempDir;
 
-use netcdf3::{FileWriter, DataSet, Variable, Version};
+use netcdf3::{DataSet, FileWriter, Variable, Version};
 
 use copy_to_tmp_file::{
-    NC3_FILL_VALUES_FILE_NAME, NC3_FILL_VALUES_FILE_BYTES,
-    SCALAR_VARIABLES_FILE_NAME, SCALAR_VARIABLES_FILE_BYTES,
-    EMPTY_DATA_SET_FILE_NAME, EMPTY_DATA_SET_FILE_BYTES,
-    NC3_CLASSIC_FILE_NAME, NC3_CLASSIC_FILE_BYTES,
-    NC3_64BIT_OFFSET_FILE_NAME, NC3_64BIT_OFFSET_FILE_BYTES,
-    NC3_ZERO_SIZED_UNLIMITED_DIM_FILE_NAME, NC3_ZERO_SIZED_UNLIMITED_DIM_FILE_BYTES,
-    NC3_CONTAINING_DEFAULT_FILL_VALUES_FILE_NAME, NC3_CONTAINING_DEFAULT_FILL_VALUES_FILE_BYTES,
+    EMPTY_DATA_SET_FILE_BYTES, EMPTY_DATA_SET_FILE_NAME, NC3_64BIT_OFFSET_FILE_BYTES, NC3_64BIT_OFFSET_FILE_NAME, NC3_CLASSIC_FILE_BYTES,
+    NC3_CLASSIC_FILE_NAME, NC3_CONTAINING_DEFAULT_FILL_VALUES_FILE_BYTES, NC3_CONTAINING_DEFAULT_FILL_VALUES_FILE_NAME,
+    NC3_FILL_VALUES_FILE_BYTES, NC3_FILL_VALUES_FILE_NAME, NC3_ZERO_SIZED_UNLIMITED_DIM_FILE_BYTES, NC3_ZERO_SIZED_UNLIMITED_DIM_FILE_NAME,
+    SCALAR_VARIABLES_FILE_BYTES, SCALAR_VARIABLES_FILE_NAME,
 };
 
 /// Prefix of the temporary output directories
@@ -58,8 +55,8 @@ fn test_write_file_nc_fill_values() {
     };
     tmp_dir.close().unwrap();
 
-    assert_eq!(NC3_FILL_VALUES_FILE_BYTES.len(),     written_bytes.len());
-    assert_eq!(NC3_FILL_VALUES_FILE_BYTES,           &written_bytes[..]);
+    assert_eq!(NC3_FILL_VALUES_FILE_BYTES.len(), written_bytes.len());
+    assert_eq!(NC3_FILL_VALUES_FILE_BYTES, &written_bytes[..]);
 }
 
 #[test]
@@ -108,8 +105,8 @@ fn test_write_file_scalar_vars() {
     };
     tmp_dir.close().unwrap();
 
-    assert_eq!(SCALAR_VARIABLES_FILE_BYTES.len(),   written_bytes.len());
-    assert_eq!(SCALAR_VARIABLES_FILE_BYTES,         &written_bytes[..]);
+    assert_eq!(SCALAR_VARIABLES_FILE_BYTES.len(), written_bytes.len());
+    assert_eq!(SCALAR_VARIABLES_FILE_BYTES, &written_bytes[..]);
 }
 
 #[test]
@@ -118,7 +115,7 @@ fn test_write_file_empty_data_set() {
         let data_set: DataSet = DataSet::new();
 
         let mut file_writer: FileWriter = FileWriter::open(file_path).unwrap();
-        file_writer.set_def(&data_set, Version::Classic, 1 <<12).unwrap();
+        file_writer.set_def(&data_set, Version::Classic, 1 << 12).unwrap();
         file_writer.close().unwrap();
     }
 
@@ -136,8 +133,8 @@ fn test_write_file_empty_data_set() {
     };
     tmp_dir.close().unwrap();
 
-    assert_eq!(EMPTY_DATA_SET_FILE_BYTES.len(),   written_bytes.len());
-    assert_eq!(EMPTY_DATA_SET_FILE_BYTES,         &written_bytes[..]);
+    assert_eq!(EMPTY_DATA_SET_FILE_BYTES.len(), written_bytes.len());
+    assert_eq!(EMPTY_DATA_SET_FILE_BYTES, &written_bytes[..]);
 }
 
 const LATITUDE_DIM_NAME: &str = "latitude";
@@ -156,26 +153,38 @@ const TIME_VAR_DATA: [f32; 2] = [438_300.0, 438_324.0];
 const TIME_VAR_LEN: usize = TIME_VAR_DATA.len();
 
 const TEMP_I8_VAR_NAME: &str = "temperature_i8";
-const TEMP_I8_VAR_DATA: [i8; 30] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
+const TEMP_I8_VAR_DATA: [i8; 30] = [
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+];
 
 const TEMP_U8_VAR_NAME: &str = "temperature_u8";
-const TEMP_U8_VAR_DATA: [u8; 30] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
+const TEMP_U8_VAR_DATA: [u8; 30] = [
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+];
 
 const TEMP_I16_VAR_NAME: &str = "temperature_i16";
-const TEMP_I16_VAR_DATA: [i16; 30] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
+const TEMP_I16_VAR_DATA: [i16; 30] = [
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+];
 
 const TEMP_I32_VAR_NAME: &str = "temperature_i32";
-const TEMP_I32_VAR_DATA: [i32; 30] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
+const TEMP_I32_VAR_DATA: [i32; 30] = [
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+];
 
 const TEMP_F32_VAR_NAME: &str = "temperature_f32";
-const TEMP_F32_VAR_DATA: [f32; 30] = [0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21., 22., 23., 24., 25., 26., 27., 28., 29.];
+const TEMP_F32_VAR_DATA: [f32; 30] = [
+    0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21., 22., 23., 24., 25., 26., 27., 28.,
+    29.,
+];
 
 const TEMP_F64_VAR_NAME: &str = "temperature_f64";
-const TEMP_F64_VAR_DATA: [f64; 30] = [0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21., 22., 23., 24., 25., 26., 27., 28., 29.];
+const TEMP_F64_VAR_DATA: [f64; 30] = [
+    0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21., 22., 23., 24., 25., 26., 27., 28.,
+    29.,
+];
 
 fn init_temperatures_definition() -> DataSet {
-
-
     let mut data_set: DataSet = DataSet::new();
 
     // First define the dimensions
@@ -216,7 +225,9 @@ fn init_temperatures_definition() -> DataSet {
         var.add_attr_string("calendar", "gregorian").unwrap();
         var.add_attr_string("axis", "T").unwrap();
     }
-    data_set.add_var_i8(TEMP_I8_VAR_NAME, &[TIME_DIM_NAME, LATITUDE_DIM_NAME, LONGITUDE_DIM_NAME]).unwrap();
+    data_set
+        .add_var_i8(TEMP_I8_VAR_NAME, &[TIME_DIM_NAME, LATITUDE_DIM_NAME, LONGITUDE_DIM_NAME])
+        .unwrap();
     {
         // Add the variable attributes
         let var: &mut Variable = data_set.get_var_mut(TEMP_I8_VAR_NAME).unwrap();
@@ -225,7 +236,9 @@ fn init_temperatures_definition() -> DataSet {
         var.add_attr_string("long_name", "TEMPERATURE").unwrap();
         var.add_attr_string("units", "Celsius").unwrap();
     }
-    data_set.add_var_u8(TEMP_U8_VAR_NAME, &[TIME_DIM_NAME, LATITUDE_DIM_NAME, LONGITUDE_DIM_NAME]).unwrap();
+    data_set
+        .add_var_u8(TEMP_U8_VAR_NAME, &[TIME_DIM_NAME, LATITUDE_DIM_NAME, LONGITUDE_DIM_NAME])
+        .unwrap();
     {
         // Add the variable attributes
         let var: &mut Variable = data_set.get_var_mut(TEMP_U8_VAR_NAME).unwrap();
@@ -234,7 +247,9 @@ fn init_temperatures_definition() -> DataSet {
         var.add_attr_string("long_name", "TEMPERATURE").unwrap();
         var.add_attr_string("units", "Celsius").unwrap();
     }
-    data_set.add_var_i16(TEMP_I16_VAR_NAME, &[TIME_DIM_NAME, LATITUDE_DIM_NAME, LONGITUDE_DIM_NAME]).unwrap();
+    data_set
+        .add_var_i16(TEMP_I16_VAR_NAME, &[TIME_DIM_NAME, LATITUDE_DIM_NAME, LONGITUDE_DIM_NAME])
+        .unwrap();
     {
         // Add the variable attributes
         let var: &mut Variable = data_set.get_var_mut(TEMP_I16_VAR_NAME).unwrap();
@@ -243,7 +258,9 @@ fn init_temperatures_definition() -> DataSet {
         var.add_attr_string("long_name", "TEMPERATURE").unwrap();
         var.add_attr_string("units", "Celsius").unwrap();
     }
-    data_set.add_var_i32(TEMP_I32_VAR_NAME, &[TIME_DIM_NAME, LATITUDE_DIM_NAME, LONGITUDE_DIM_NAME]).unwrap();
+    data_set
+        .add_var_i32(TEMP_I32_VAR_NAME, &[TIME_DIM_NAME, LATITUDE_DIM_NAME, LONGITUDE_DIM_NAME])
+        .unwrap();
     {
         // Add the variable attributes
         let var: &mut Variable = data_set.get_var_mut(TEMP_I32_VAR_NAME).unwrap();
@@ -252,7 +269,9 @@ fn init_temperatures_definition() -> DataSet {
         var.add_attr_string("long_name", "TEMPERATURE").unwrap();
         var.add_attr_string("units", "Celsius").unwrap();
     }
-    data_set.add_var_f32(TEMP_F32_VAR_NAME, &[TIME_DIM_NAME, LATITUDE_DIM_NAME, LONGITUDE_DIM_NAME]).unwrap();
+    data_set
+        .add_var_f32(TEMP_F32_VAR_NAME, &[TIME_DIM_NAME, LATITUDE_DIM_NAME, LONGITUDE_DIM_NAME])
+        .unwrap();
     {
         // Add the variable attributes
         let var: &mut Variable = data_set.get_var_mut(TEMP_F32_VAR_NAME).unwrap();
@@ -261,7 +280,9 @@ fn init_temperatures_definition() -> DataSet {
         var.add_attr_string("long_name", "TEMPERATURE").unwrap();
         var.add_attr_string("units", "Celsius").unwrap();
     }
-    data_set.add_var_f64(TEMP_F64_VAR_NAME, &[TIME_DIM_NAME, LATITUDE_DIM_NAME, LONGITUDE_DIM_NAME]).unwrap();
+    data_set
+        .add_var_f64(TEMP_F64_VAR_NAME, &[TIME_DIM_NAME, LATITUDE_DIM_NAME, LONGITUDE_DIM_NAME])
+        .unwrap();
     {
         // Add the variable attributes
         let var: &mut Variable = data_set.get_var_mut(TEMP_F64_VAR_NAME).unwrap();
@@ -275,16 +296,16 @@ fn init_temperatures_definition() -> DataSet {
 
 /// Write data of each variable
 fn write_temperatures_data(file_writer: &mut FileWriter) {
-        file_writer.write_var_f32(LATITUDE_VAR_NAME, &LATITUDE_VAR_DATA).unwrap();
-        file_writer.write_var_f32(LONGITUDE_VAR_NAME, &LONGITUDE_VAR_DATA).unwrap();
-        file_writer.write_var_f32(TIME_DIM_NAME, &TIME_VAR_DATA).unwrap();
+    file_writer.write_var_f32(LATITUDE_VAR_NAME, &LATITUDE_VAR_DATA).unwrap();
+    file_writer.write_var_f32(LONGITUDE_VAR_NAME, &LONGITUDE_VAR_DATA).unwrap();
+    file_writer.write_var_f32(TIME_DIM_NAME, &TIME_VAR_DATA).unwrap();
 
-        file_writer.write_var_i8(TEMP_I8_VAR_NAME, &TEMP_I8_VAR_DATA).unwrap();
-        file_writer.write_var_u8(TEMP_U8_VAR_NAME, &TEMP_U8_VAR_DATA).unwrap();
-        file_writer.write_var_i16(TEMP_I16_VAR_NAME, &TEMP_I16_VAR_DATA).unwrap();
-        file_writer.write_var_i32(TEMP_I32_VAR_NAME, &TEMP_I32_VAR_DATA).unwrap();
-        file_writer.write_var_f32(TEMP_F32_VAR_NAME, &TEMP_F32_VAR_DATA).unwrap();
-        file_writer.write_var_f64(TEMP_F64_VAR_NAME, &TEMP_F64_VAR_DATA).unwrap();
+    file_writer.write_var_i8(TEMP_I8_VAR_NAME, &TEMP_I8_VAR_DATA).unwrap();
+    file_writer.write_var_u8(TEMP_U8_VAR_NAME, &TEMP_U8_VAR_DATA).unwrap();
+    file_writer.write_var_i16(TEMP_I16_VAR_NAME, &TEMP_I16_VAR_DATA).unwrap();
+    file_writer.write_var_i32(TEMP_I32_VAR_NAME, &TEMP_I32_VAR_DATA).unwrap();
+    file_writer.write_var_f32(TEMP_F32_VAR_NAME, &TEMP_F32_VAR_DATA).unwrap();
+    file_writer.write_var_f64(TEMP_F64_VAR_NAME, &TEMP_F64_VAR_DATA).unwrap();
 }
 
 #[test]
@@ -317,8 +338,8 @@ fn test_write_file_nc3_classic() {
     };
     tmp_dir.close().unwrap();
 
-    assert_eq!(NC3_CLASSIC_FILE_BYTES.len(),   written_bytes.len());
-    assert_eq!(NC3_CLASSIC_FILE_BYTES,         &written_bytes[..]);
+    assert_eq!(NC3_CLASSIC_FILE_BYTES.len(), written_bytes.len());
+    assert_eq!(NC3_CLASSIC_FILE_BYTES, &written_bytes[..]);
 }
 
 #[test]
@@ -326,7 +347,9 @@ fn test_write_file_nc3_64bit_offset() {
     fn write_file_nc3_64bit_offset<P: AsRef<Path>>(file_path: P) {
         let data_set: DataSet = {
             let mut data_set: DataSet = init_temperatures_definition();
-            data_set.add_global_attr_string("title", "Example of NETCDF3_64BIT_OFFSET file").unwrap();
+            data_set
+                .add_global_attr_string("title", "Example of NETCDF3_64BIT_OFFSET file")
+                .unwrap();
             data_set.add_global_attr_string("Conventions", "CF-1.8").unwrap();
             data_set
         };
@@ -351,15 +374,14 @@ fn test_write_file_nc3_64bit_offset() {
     };
     tmp_dir.close().unwrap();
 
-    assert_eq!(NC3_64BIT_OFFSET_FILE_BYTES.len(),   written_bytes.len());
-    assert_eq!(NC3_64BIT_OFFSET_FILE_BYTES,         &written_bytes[..]);
+    assert_eq!(NC3_64BIT_OFFSET_FILE_BYTES.len(), written_bytes.len());
+    assert_eq!(NC3_64BIT_OFFSET_FILE_BYTES, &written_bytes[..]);
 }
-
 
 #[test]
 fn test_write_file_containing_default_fill_values() {
     const DIM_NAME: &str = "dimension_0";
-    const DIM_LEN: usize= 3;
+    const DIM_LEN: usize = 3;
 
     const VAR_I8_NAME: &str = "var_i8";
     const VAR_U8_NAME: &str = "var_u8";
@@ -368,7 +390,6 @@ fn test_write_file_containing_default_fill_values() {
     const VAR_F32_NAME: &str = "var_f32";
     const VAR_F64_NAME: &str = "var_f64";
     fn write_file_containing_default_fill_values<P: AsRef<Path>>(file_path: P) {
-
         let mut data_set: DataSet = DataSet::new();
 
         data_set.set_unlimited_dim(DIM_NAME, DIM_LEN).unwrap();
@@ -423,59 +444,54 @@ fn test_write_file_containing_default_fill_values() {
     let output_file_path = tmp_dir.path().join(NC3_CONTAINING_DEFAULT_FILL_VALUES_FILE_NAME);
     write_file_containing_default_fill_values(&output_file_path);
 
-    
     // Read and compare the previously written values
     {
+        use netcdf3::{DataType, DataVector, FileReader};
+        use netcdf3::{NC_FILL_F32, NC_FILL_F64, NC_FILL_I16, NC_FILL_I32, NC_FILL_I8, NC_FILL_U8};
         use std::collections::HashMap;
-        use netcdf3::{FileReader, DataVector, DataType};
-        use netcdf3::{
-            NC_FILL_I8,NC_FILL_U8,
-            NC_FILL_I16,NC_FILL_I32,
-            NC_FILL_F32, NC_FILL_F64,
-        };
 
         let mut file_reader: FileReader = FileReader::open(&output_file_path).unwrap();
         let variables: HashMap<String, DataVector> = file_reader.read_all_vars().unwrap();
 
         // let _: (DataSet, Version) = file_reader.close();
 
-        assert_eq!(7,                                       variables.len());
-        
-        assert_eq!(true,                                    variables.contains_key(DIM_NAME));
-        assert_eq!(DataType::I32,                            variables[DIM_NAME].data_type());
-        assert_eq!(Some(&[1, 2, 3][..]),                    variables[DIM_NAME].get_i32());
-    
-        assert_eq!(true,                                    variables.contains_key(VAR_I8_NAME));
-        assert_eq!(DataType::I8,                            variables[VAR_I8_NAME].data_type());
-        assert_ne!(Some(&[1, 2, 3][..]),                    variables[VAR_I8_NAME].get_i8());
-        assert_eq!(Some(&[1, NC_FILL_I8, 3][..]),           variables[VAR_I8_NAME].get_i8());
+        assert_eq!(7, variables.len());
 
-        assert_eq!(true,                                    variables.contains_key(VAR_U8_NAME));
-        assert_eq!(DataType::U8,                            variables[VAR_U8_NAME].data_type());
-        assert_ne!(Some(&[1, 2, 3][..]),                    variables[VAR_U8_NAME].get_u8());
-        assert_eq!(Some(&[1, NC_FILL_U8, 3][..]),           variables[VAR_U8_NAME].get_u8());
+        assert_eq!(true, variables.contains_key(DIM_NAME));
+        assert_eq!(DataType::I32, variables[DIM_NAME].data_type());
+        assert_eq!(Some(&[1, 2, 3][..]), variables[DIM_NAME].get_i32());
 
-        assert_eq!(true,                                    variables.contains_key(VAR_I16_NAME));
-        assert_eq!(DataType::I16,                           variables[VAR_I16_NAME].data_type());
-        assert_ne!(Some(&[1, 2, 3][..]),                    variables[VAR_I16_NAME].get_i16());
-        assert_eq!(Some(&[1, NC_FILL_I16, 3][..]),          variables[VAR_I16_NAME].get_i16());
+        assert_eq!(true, variables.contains_key(VAR_I8_NAME));
+        assert_eq!(DataType::I8, variables[VAR_I8_NAME].data_type());
+        assert_ne!(Some(&[1, 2, 3][..]), variables[VAR_I8_NAME].get_i8());
+        assert_eq!(Some(&[1, NC_FILL_I8, 3][..]), variables[VAR_I8_NAME].get_i8());
 
-        assert_eq!(true,                                    variables.contains_key(VAR_I32_NAME));
-        assert_eq!(DataType::I32,                           variables[VAR_I32_NAME].data_type());
-        assert_ne!(Some(&[1, 2, 3][..]),                    variables[VAR_I32_NAME].get_i32());
-        assert_eq!(Some(&[1, NC_FILL_I32, 3][..]),          variables[VAR_I32_NAME].get_i32());
+        assert_eq!(true, variables.contains_key(VAR_U8_NAME));
+        assert_eq!(DataType::U8, variables[VAR_U8_NAME].data_type());
+        assert_ne!(Some(&[1, 2, 3][..]), variables[VAR_U8_NAME].get_u8());
+        assert_eq!(Some(&[1, NC_FILL_U8, 3][..]), variables[VAR_U8_NAME].get_u8());
 
-        assert_eq!(true,                                    variables.contains_key(VAR_F32_NAME));
-        assert_eq!(DataType::F32,                           variables[VAR_F32_NAME].data_type());
-        assert_ne!(Some(&[1.0, 2.0, 3.0][..]),              variables[VAR_F32_NAME].get_f32());
-        assert_eq!(Some(&[1.0, NC_FILL_F32, 3.0][..]),      variables[VAR_F32_NAME].get_f32());
+        assert_eq!(true, variables.contains_key(VAR_I16_NAME));
+        assert_eq!(DataType::I16, variables[VAR_I16_NAME].data_type());
+        assert_ne!(Some(&[1, 2, 3][..]), variables[VAR_I16_NAME].get_i16());
+        assert_eq!(Some(&[1, NC_FILL_I16, 3][..]), variables[VAR_I16_NAME].get_i16());
 
-        assert_eq!(true,                                    variables.contains_key(VAR_F64_NAME));
-        assert_eq!(DataType::F64,                           variables[VAR_F64_NAME].data_type());
-        assert_ne!(Some(&[1.0, 2.0, 3.0][..]),              variables[VAR_F64_NAME].get_f64());
-        assert_eq!(Some(&[1.0, NC_FILL_F64, 3.0][..]),      variables[VAR_F64_NAME].get_f64());
+        assert_eq!(true, variables.contains_key(VAR_I32_NAME));
+        assert_eq!(DataType::I32, variables[VAR_I32_NAME].data_type());
+        assert_ne!(Some(&[1, 2, 3][..]), variables[VAR_I32_NAME].get_i32());
+        assert_eq!(Some(&[1, NC_FILL_I32, 3][..]), variables[VAR_I32_NAME].get_i32());
+
+        assert_eq!(true, variables.contains_key(VAR_F32_NAME));
+        assert_eq!(DataType::F32, variables[VAR_F32_NAME].data_type());
+        assert_ne!(Some(&[1.0, 2.0, 3.0][..]), variables[VAR_F32_NAME].get_f32());
+        assert_eq!(Some(&[1.0, NC_FILL_F32, 3.0][..]), variables[VAR_F32_NAME].get_f32());
+
+        assert_eq!(true, variables.contains_key(VAR_F64_NAME));
+        assert_eq!(DataType::F64, variables[VAR_F64_NAME].data_type());
+        assert_ne!(Some(&[1.0, 2.0, 3.0][..]), variables[VAR_F64_NAME].get_f64());
+        assert_eq!(Some(&[1.0, NC_FILL_F64, 3.0][..]), variables[VAR_F64_NAME].get_f64());
     }
-    
+
     // Compare the written file with the test data file
     let written_bytes: Vec<u8> = {
         let mut written_bytes: Vec<u8> = vec![];
@@ -485,13 +501,12 @@ fn test_write_file_containing_default_fill_values() {
     };
     tmp_dir.close().unwrap();
 
-    assert_eq!(NC3_CONTAINING_DEFAULT_FILL_VALUES_FILE_BYTES.len(),       written_bytes.len());
-    assert_eq!(NC3_CONTAINING_DEFAULT_FILL_VALUES_FILE_BYTES,             &written_bytes[..]);
+    assert_eq!(NC3_CONTAINING_DEFAULT_FILL_VALUES_FILE_BYTES.len(), written_bytes.len());
+    assert_eq!(NC3_CONTAINING_DEFAULT_FILL_VALUES_FILE_BYTES, &written_bytes[..]);
 }
 
 #[test]
 fn test_write_file_zero_sized_unlimited_dim() {
-
     const UNLIM_DIM_NAME: &str = "unlim_dim";
     const UNLIM_DIM_SIZE: usize = 0;
 
@@ -521,6 +536,6 @@ fn test_write_file_zero_sized_unlimited_dim() {
     };
     tmp_dir.close().unwrap();
 
-    assert_eq!(NC3_ZERO_SIZED_UNLIMITED_DIM_FILE_BYTES.len(),       written_bytes.len());
-    assert_eq!(NC3_ZERO_SIZED_UNLIMITED_DIM_FILE_BYTES,             &written_bytes[..]);
+    assert_eq!(NC3_ZERO_SIZED_UNLIMITED_DIM_FILE_BYTES.len(), written_bytes.len());
+    assert_eq!(NC3_ZERO_SIZED_UNLIMITED_DIM_FILE_BYTES, &written_bytes[..]);
 }

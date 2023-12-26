@@ -1,8 +1,8 @@
 mod tests;
 
+use crate::name_string::is_valid_name;
 use crate::InvalidDataSet;
 use crate::NC_MAX_DIM_SIZE;
-use crate::name_string::is_valid_name;
 
 use std::cell::RefCell;
 
@@ -178,7 +178,6 @@ impl DimensionSize {
 }
 
 impl Dimension {
-
     /// Creates a new *fixed size* NetCDF-3 dimension.
     pub(crate) fn new_fixed_size(name: &str, size: usize) -> Result<Dimension, InvalidDataSet> {
         Dimension::check_dim_name(name)?;
@@ -186,7 +185,10 @@ impl Dimension {
             return Err(InvalidDataSet::FixedDimensionWithZeroSize(name.to_string()));
         }
         if size > NC_MAX_DIM_SIZE {
-            return Err(InvalidDataSet::MaximumFixedDimensionSizeExceeded{dim_name: name.to_string(), get: size});
+            return Err(InvalidDataSet::MaximumFixedDimensionSizeExceeded {
+                dim_name: name.to_string(),
+                get: size,
+            });
         }
         return Ok(Dimension {
             name: RefCell::new(name.to_string()),

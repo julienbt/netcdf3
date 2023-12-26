@@ -26,14 +26,14 @@ pub fn is_valid_name(name: &str) -> bool {
         None => {
             // then the name string is empty
             return false;
-        }
+        },
         Some(c) => {
             if c.is_ascii() {
                 if !(c.is_alphanumeric() || c == '_') {
                     return false;
                 }
             }
-        }
+        },
     }
     if name.as_bytes().len() > NC_MAX_NAME_SIZE {
         return false;

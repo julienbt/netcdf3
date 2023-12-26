@@ -1,7 +1,7 @@
 mod tests;
 
-use crate::name_string::is_valid_name;
 use crate::data_vector::DataVector;
+use crate::name_string::is_valid_name;
 use crate::DataType;
 
 /// NetCDF-3 attribute

@@ -1,37 +1,26 @@
-mod tests_file_writer;
 mod tests_computed_data_set_metadata;
+mod tests_file_writer;
 
-use std::io::{Write, Seek, SeekFrom};
-use std::rc::Rc;
-use std::path::{Path, PathBuf};
-use std::convert::TryFrom;
 use std::collections::BTreeSet;
+use std::convert::TryFrom;
+use std::io::{Seek, SeekFrom, Write};
+use std::path::{Path, PathBuf};
+use std::rc::Rc;
 
-use crate::{DataSet, Version, Dimension, Attribute, DataType, Variable};
-use crate::io::Offset;
 use crate::data_set::DimensionSize;
 use crate::data_vector::DataVector;
 use crate::error::WriteError;
+use crate::io::Offset;
+use crate::{Attribute, DataSet, DataType, Dimension, Variable, Version};
 
-use crate::io::{
-    ABSENT_TAG, DIMENSION_TAG, VARIABLE_TAG, ATTRIBUTE_TAG,
-    compute_padding_size,
-};
+use crate::io::{compute_padding_size, ABSENT_TAG, ATTRIBUTE_TAG, DIMENSION_TAG, VARIABLE_TAG};
 
-use crate::{
-    NC_FILL_I8,
-    NC_FILL_U8,
-    NC_FILL_I16,
-    NC_FILL_I32,
-    NC_FILL_F32,
-    NC_FILL_F64,
-};
+use crate::{NC_FILL_F32, NC_FILL_F64, NC_FILL_I16, NC_FILL_I32, NC_FILL_I8, NC_FILL_U8};
 
 macro_rules! impl_write_typed_chunk {
     ($func_name:ident, $prim_type:ty, $nc_fill_value:ident) => {
         /// Write the `$prim_type` slice into the output stream.
-        fn $func_name<T: Write>(out_stream: &mut T, slice: &[$prim_type]) -> Result<usize, std::io::Error>
-        {
+        fn $func_name<T: Write>(out_stream: &mut T, slice: &[$prim_type]) -> Result<usize, std::io::Error> {
             // Write the useful bytes
             const SIZE_OF: usize = std::mem::size_of::<$prim_type>();
             let mut bytes: [u8; SIZE_OF];
@@ -53,30 +42,44 @@ macro_rules! impl_write_typed_chunk {
             // Return the number of written bytes
             Ok(num_bytes)
         }
-    }
+    };
 }
 
 macro_rules! impl_write_typed_var {
     ($func_name:ident, $write_typed_chunk: path, $prim_type:ty, $data_type:path, $data_vector:path) => {
         pub fn $func_name(&mut self, var_name: &str, data: &[$prim_type]) -> Result<(), WriteError> {
             let header_def: &HeaderDefinition = self.header_def.as_ref().ok_or(WriteError::HeaderNotDefined)?;
-            let var: &Variable = header_def.data_set.find_var_from_name(var_name).map_err(|_err| WriteError::VariableNotDefined(var_name.to_owned()))?.1;
+            let var: &Variable = header_def
+                .data_set
+                .find_var_from_name(var_name)
+                .map_err(|_err| WriteError::VariableNotDefined(var_name.to_owned()))?
+                .1;
             if var.data_type != $data_type {
-                return Err(WriteError::VariableMismatchDataType{var_name: var_name.to_owned(), req:var.data_type(), get: $data_type });
+                return Err(WriteError::VariableMismatchDataType {
+                    var_name: var_name.to_owned(),
+                    req: var.data_type(),
+                    get: $data_type,
+                });
             }
             if var.len() != data.len() {
-                return Err(WriteError::VariableMismatchDataLength{var_name: var_name.to_owned(), req:var.len(), get: data.len()});
+                return Err(WriteError::VariableMismatchDataLength {
+                    var_name: var_name.to_owned(),
+                    req: var.len(),
+                    get: data.len(),
+                });
             }
             let var_metadata: &ComputedVariableMetadata = header_def.get_var_metadata(var)?;
 
             // Write the `$prim_type` data
             let begin_offset: u64 = i64::from(var_metadata.begin_offset.clone()) as u64;
             match header_def.data_set.record_size() {
-                None => {  // fixed-size variable
+                None => {
+                    // fixed-size variable
                     self.output_file.seek(SeekFrom::Start(begin_offset))?;
                     let _chunk_size: usize = $write_typed_chunk(&mut self.output_file, data)?;
                 },
-                Some(record_size) => {  // record variable
+                Some(record_size) => {
+                    // record variable
                     let num_chunks: usize = var.num_chunks();
                     let chunk_len: usize = var.chunk_len();
                     // Loop over data chunks
@@ -88,7 +91,7 @@ macro_rules! impl_write_typed_var {
                         self.output_file.seek(SeekFrom::Start(position))?;
                         let _chunk_size: usize = $write_typed_chunk(&mut self.output_file, chunk_slice)?;
                     }
-                }
+                },
             }
 
             // Save the records already written
@@ -100,23 +103,38 @@ macro_rules! impl_write_typed_var {
 }
 
 macro_rules! impl_write_typed_record {
-    ($func_name:ident, $write_typed_chunk: path, $prim_type:ty, $data_type: path)=> {
+    ($func_name:ident, $write_typed_chunk: path, $prim_type:ty, $data_type: path) => {
         pub fn $func_name(&mut self, var_name: &str, record_index: usize, record: &[$prim_type]) -> Result<(), WriteError> {
             // Check that the defintion has been set
             let header_def: &HeaderDefinition = self.header_def.as_ref().ok_or(WriteError::HeaderNotDefined)?;
             // Check that the variable has been defined
-            let var: &Variable = header_def.data_set.find_var_from_name(var_name).map_err(|_err| WriteError::VariableNotDefined(var_name.to_owned()))?.1;
+            let var: &Variable = header_def
+                .data_set
+                .find_var_from_name(var_name)
+                .map_err(|_err| WriteError::VariableNotDefined(var_name.to_owned()))?
+                .1;
             if var.data_type != $data_type {
-                return Err(WriteError::VariableMismatchDataType{var_name: var_name.to_owned(), req:var.data_type(), get: $data_type});
+                return Err(WriteError::VariableMismatchDataType {
+                    var_name: var_name.to_owned(),
+                    req: var.data_type(),
+                    get: $data_type,
+                });
             }
             let num_records: usize = header_def.data_set.num_records().unwrap_or(1);
             // Check the record index validity
             if record_index >= num_records {
-                return Err(WriteError::RecordIndexExceeded{index: record_index, num_records: num_records});
+                return Err(WriteError::RecordIndexExceeded {
+                    index: record_index,
+                    num_records: num_records,
+                });
             }
             // Check the length of the record
             if record.len() != var.chunk_len() {
-                return Err(WriteError::RecordMismatchDataLength{var_name: var.name.clone(), req: var.chunk_len(), get: record.len()});
+                return Err(WriteError::RecordMismatchDataLength {
+                    var_name: var.name.clone(),
+                    req: var.chunk_len(),
+                    get: record.len(),
+                });
             }
             let var_metadata: &ComputedVariableMetadata = header_def.get_var_metadata(var)?;
             let record_size: usize = header_def.data_set.record_size().unwrap_or(0);
@@ -136,8 +154,7 @@ macro_rules! impl_write_typed_record {
 macro_rules! impl_write_typed_chunk_nc_fill {
     ($func_name: ident, $prim_type:ty, $nc_fill_value:path) => {
         /// Fill the output stream with the default value [`$nc_fill_value`](constant.$nc_fill_value.html).
-        fn $func_name<T: Write>(out_stream: &mut T, num_values: usize) -> Result<usize, std::io::Error>
-        {
+        fn $func_name<T: Write>(out_stream: &mut T, num_values: usize) -> Result<usize, std::io::Error> {
             // Write the useful bytes
             const SIZE_OF: usize = std::mem::size_of::<$prim_type>();
             let bytes: [u8; SIZE_OF] = $nc_fill_value.to_be_bytes();
@@ -236,8 +253,7 @@ macro_rules! impl_write_typed_chunk_nc_fill {
 /// assert_eq!(NC3_LIGHT_CLASSIC_FILE_BYTES,            &nc3_file_bytes[..]);
 /// ```
 #[derive(Debug)]
-pub struct FileWriter<'a>
-{
+pub struct FileWriter<'a> {
     /// Path of the output file
     output_file_path: PathBuf,
     /// Opened file on the file system
@@ -249,9 +265,8 @@ pub struct FileWriter<'a>
 }
 
 impl<'a> FileWriter<'a> {
-
     /// Opens and overwrites an existing NetCDF-3 file or creates one.
-     pub fn open<P: std::convert::AsRef<Path>>(output_file_path: P) -> Result<FileWriter<'a>, WriteError> {
+    pub fn open<P: std::convert::AsRef<Path>>(output_file_path: P) -> Result<FileWriter<'a>, WriteError> {
         let output_file_path: PathBuf = {
             let mut path = PathBuf::new();
             path.push(output_file_path);
@@ -265,7 +280,7 @@ impl<'a> FileWriter<'a> {
             .truncate(true)
             .append(false)
             .open(output_file_path.clone())?;
-        Ok(FileWriter{
+        Ok(FileWriter {
             output_file: output_file,
             output_file_path: output_file_path,
             header_def: None,
@@ -289,7 +304,7 @@ impl<'a> FileWriter<'a> {
             .write(true)
             .create_new(true)
             .open(output_file_path.clone())?;
-        Ok(FileWriter{
+        Ok(FileWriter {
             output_file: output_file,
             output_file_path: output_file_path,
             header_def: None,
@@ -371,10 +386,8 @@ impl<'a> FileWriter<'a> {
         return self.header_def.as_ref().map(|header_def| header_def.header_min_size);
     }
 
-
     /// Fills the unwritten data, and closes the NetCDF-3 file.
-    pub fn close(mut self) -> Result<(), WriteError>
-    {
+    pub fn close(mut self) -> Result<(), WriteError> {
         let header_def: &HeaderDefinition = match self.header_def {
             None => return Ok(()),
             Some(ref header_def) => header_def,
@@ -385,7 +398,9 @@ impl<'a> FileWriter<'a> {
             let num_vars = header_def.data_set.vars.len();
             let mut not_written_records: Vec<(&'a Variable, Vec<usize>)> = Vec::with_capacity(num_vars);
             for var in header_def.data_set.vars.iter() {
-                let written_records: Option<&BTreeSet<usize>> = self.written_records.iter()
+                let written_records: Option<&BTreeSet<usize>> = self
+                    .written_records
+                    .iter()
                     .find(|(var_2, _written_records): &&(&'a Variable, BTreeSet<usize>)| var == *var_2)
                     .map(|(_var_2, written_records): &(&'a Variable, BTreeSet<_>)| written_records);
                 let not_written_record: Vec<usize> = match written_records {
@@ -440,7 +455,6 @@ impl<'a> FileWriter<'a> {
     impl_write_typed_record!(write_record_f32, FileWriter::write_chunk_f32, f32, DataType::F32);
     impl_write_typed_record!(write_record_f64, FileWriter::write_chunk_f64, f64, DataType::F64);
 
-
     impl_write_typed_chunk_nc_fill!(write_chunk_nc_fill_i8, i8, NC_FILL_I8);
     impl_write_typed_chunk_nc_fill!(write_chunk_nc_fill_u8, u8, NC_FILL_U8);
     impl_write_typed_chunk_nc_fill!(write_chunk_nc_fill_i16, i16, NC_FILL_I16);
@@ -448,23 +462,25 @@ impl<'a> FileWriter<'a> {
     impl_write_typed_chunk_nc_fill!(write_chunk_nc_fill_f32, f32, NC_FILL_F32);
     impl_write_typed_chunk_nc_fill!(write_chunk_nc_fill_f64, f64, NC_FILL_F64);
 
-    fn update_written_records(&mut self, var: &'a Variable, records: &[usize]) -> Result<(), WriteError>
-    {
+    fn update_written_records(&mut self, var: &'a Variable, records: &[usize]) -> Result<(), WriteError> {
         let mut records_set: BTreeSet<usize> = records.iter().map(|index: &usize| index.clone()).collect();
         // Get already written records for the variable
-        let ref mut written_records: Option<&mut BTreeSet<usize>> = self.written_records.iter_mut()
+        let ref mut written_records: Option<&mut BTreeSet<usize>> = self
+            .written_records
+            .iter_mut()
             .find(|(var_2, _written_records): &&mut (&'a Variable, BTreeSet<usize>)| var == *var_2)
             .map(|(_var_2, written_records): &mut (&'a Variable, BTreeSet<usize>)| written_records);
         // If at least one record has alredy been written
         if let Some(ref mut already_written_records_set) = written_records {
             already_written_records_set.append(&mut records_set);
-        } else {  // otherwise
+        } else {
+            // otherwise
             self.written_records.push((var, records_set));
         }
         Ok(())
     }
 
-    fn write_header(&mut self) -> Result<usize, WriteError>{
+    fn write_header(&mut self) -> Result<usize, WriteError> {
         let header_def: &HeaderDefinition = self.header_def.as_ref().ok_or(WriteError::HeaderNotDefined)?;
         self.output_file.seek(SeekFrom::Start(0))?;
         let mut num_bytes = 0;
@@ -474,15 +490,15 @@ impl<'a> FileWriter<'a> {
         num_bytes += self.output_file.write(&[header_def.version.clone() as u8])?;
         // the size of the *unlimited-size* dimension
         let num_records: u32 = match header_def.data_set.unlimited_dim.as_ref() {
-            None => 0,  // No unlimited-size dim is defined
+            None => 0, // No unlimited-size dim is defined
             Some(unlim_dim) => {
                 let num_records: usize = unlim_dim.size();
                 if num_records <= (std::i32::MAX as usize) {
                     num_records as u32
                 } else {
-                    std::u32::MAX  // indeterminate numbe of records records
+                    std::u32::MAX // indeterminate numbe of records records
                 }
-            }
+            },
         };
         let bytes: [u8; 4] = num_records.to_be_bytes();
         num_bytes += self.output_file.write(&bytes)?;
@@ -498,7 +514,7 @@ impl<'a> FileWriter<'a> {
         num_bytes += FileWriter::write_vars_list(&mut self.output_file, &data_set_metadata.vars_metadata)?;
         let zero_padding_size: &usize = &data_set_metadata.header_zero_padding_size;
         for _ in 0..*zero_padding_size {
-            num_bytes +=  self.output_file.write(&[0_u8])?;
+            num_bytes += self.output_file.write(&[0_u8])?;
         }
         Ok(num_bytes)
     }
@@ -533,7 +549,7 @@ impl<'a> FileWriter<'a> {
             let mut num_bytes = FileWriter::write_name_string(out_stream, dim.name().as_ref())?;
             // Then write the dimension size
             let dim_size: usize = match dim.size {
-                DimensionSize::Unlimited(_) => 0,  // the unlimited-size is recorded as 0
+                DimensionSize::Unlimited(_) => 0, // the unlimited-size is recorded as 0
                 DimensionSize::Fixed(fixed_size) => fixed_size,
             };
             let bytes: [u8; 4] = (dim_size as i32).to_be_bytes();
@@ -545,8 +561,7 @@ impl<'a> FileWriter<'a> {
         if dims_list.is_empty() {
             // Write the ABSENT_TAG
             num_bytes += out_stream.write(&ABSENT_TAG)?;
-        }
-        else {
+        } else {
             // Write the DIENSION_TAG
             num_bytes += out_stream.write(&DIMENSION_TAG)?;
 
@@ -591,8 +606,7 @@ impl<'a> FileWriter<'a> {
         if attrs_list.is_empty() {
             // Write the ABSENT_TAG
             num_bytes += out_stream.write(&ABSENT_TAG)?;
-        }
-        else {
+        } else {
             // Write the ATTRIBUTE_TAG
             num_bytes += out_stream.write(&ATTRIBUTE_TAG)?;
             // Write the number of attributes
@@ -608,7 +622,10 @@ impl<'a> FileWriter<'a> {
         Ok(num_bytes)
     }
 
-    fn write_vars_list<T: Write>(out_stream: &mut T, vars_metadata_list: &[(&Variable, ComputedVariableMetadata)]) -> Result<usize, WriteError> {
+    fn write_vars_list<T: Write>(
+        out_stream: &mut T,
+        vars_metadata_list: &[(&Variable, ComputedVariableMetadata)],
+    ) -> Result<usize, WriteError> {
         fn write_var<T: Write>(out_stream: &mut T, var: &Variable, var_metadata: &ComputedVariableMetadata) -> Result<usize, WriteError> {
             // Write the name of the variable
             let mut num_bytes: usize = FileWriter::write_name_string(out_stream, &var.name)?;
@@ -652,8 +669,7 @@ impl<'a> FileWriter<'a> {
         if vars_metadata_list.is_empty() {
             // Write the ABSENT_TAG
             num_bytes += out_stream.write(&ABSENT_TAG)?;
-        }
-        else {
+        } else {
             // Write the VARIABLE_TAG
             num_bytes += out_stream.write(&VARIABLE_TAG)?;
 
@@ -683,9 +699,9 @@ struct HeaderDefinition<'a> {
     data_set_metadata: ComputedDataSetMetadata<'a>,
 }
 
-impl <'a> HeaderDefinition<'a> {
+impl<'a> HeaderDefinition<'a> {
     fn new(data_set: &'a DataSet, version: Version, header_min_size: usize) -> Result<HeaderDefinition, WriteError> {
-        Ok(HeaderDefinition{
+        Ok(HeaderDefinition {
             data_set: data_set,
             version: version.clone(),
             header_min_size: header_min_size,
@@ -694,22 +710,24 @@ impl <'a> HeaderDefinition<'a> {
     }
 
     fn get_var_metadata(&self, var: &'a Variable) -> Result<&ComputedVariableMetadata, WriteError> {
-        self.data_set_metadata.vars_metadata.iter()
-            .find(|(var_2, _var_metadata): &&(&Variable,  ComputedVariableMetadata)| var == *var_2)
-            .map(|(_var, var_metadata): &(&Variable,  ComputedVariableMetadata)| var_metadata)
+        self.data_set_metadata
+            .vars_metadata
+            .iter()
+            .find(|(var_2, _var_metadata): &&(&Variable, ComputedVariableMetadata)| var == *var_2)
+            .map(|(_var, var_metadata): &(&Variable, ComputedVariableMetadata)| var_metadata)
             .ok_or(WriteError::Unexpected)
     }
 }
 
 #[derive(Debug)]
-struct  ComputedDataSetMetadata<'a> {
+struct ComputedDataSetMetadata<'a> {
     /// The number of bytes required for the header (containing useful bytes)
     #[allow(dead_code)]
     header_required_size: usize,
     /// The number of the bytes of the zero padding append to the header
     header_zero_padding_size: usize,
     /// Metadata computed for each variable
-    vars_metadata: Vec<(&'a Variable, ComputedVariableMetadata)>
+    vars_metadata: Vec<(&'a Variable, ComputedVariableMetadata)>,
 }
 
 #[derive(Debug)]
@@ -723,7 +741,6 @@ struct ComputedVariableMetadata {
 }
 
 impl<'a> ComputedDataSetMetadata<'a> {
-
     /// Computes and returns all metadata required for each variable, namely :
     ///
     /// 0. The position of the variables stored in the *data part* (a `usize` instance).
@@ -735,11 +752,11 @@ impl<'a> ComputedDataSetMetadata<'a> {
         // Create a partition of variables to distinguish :
         // 1. Fist the *fixed-size* variables.
         // 2. Then the *record* variables.
-        let (record_vars, non_record_vars): (Vec<(usize, &Variable)>, Vec<(usize, &Variable)>) = data_set.vars.iter()
-            .enumerate()  // keep the original positions of the variables in the header
-            .partition(|(_var_pos, var): &(usize, &Variable)|{
-                var.is_record_var()
-            });
+        let (record_vars, non_record_vars): (Vec<(usize, &Variable)>, Vec<(usize, &Variable)>) = data_set
+            .vars
+            .iter()
+            .enumerate() // keep the original positions of the variables in the header
+            .partition(|(_var_pos, var): &(usize, &Variable)| var.is_record_var());
         let partitioned_vars: Vec<(usize, &Variable)> = non_record_vars.into_iter().chain(record_vars).collect();
 
         // Compute the actual header size
@@ -759,31 +776,30 @@ impl<'a> ComputedDataSetMetadata<'a> {
                 header_part_pos,
                 (
                     var,
-                    ComputedVariableMetadata{
+                    ComputedVariableMetadata {
                         dim_ids: data_set.get_var_dim_ids(&var.name).unwrap(),
                         chunk_size: chunk_size,
-                        begin_offset: match &version{
+                        begin_offset: match &version {
                             Version::Classic => {
                                 let offset: i32 = i32::try_from(begin_offset).map_err(|_err| WriteError::ClassicVersionNotPossible)?;
                                 Offset::I32(offset)
                             },
-                            Version::Offset64Bit => {
-                                Offset::I64(begin_offset as i64)
-                            }
+                            Version::Offset64Bit => Offset::I64(begin_offset as i64),
                         },
-                    }
-                )
+                    },
+                ),
             ));
             begin_offset += chunk_size;
         }
 
         // Retrieve the original position
-        vars_metadata.sort_by_key(|(header_part_pos, (_var, _var_metadata)): &(usize, (&Variable, ComputedVariableMetadata))| *header_part_pos);
+        vars_metadata
+            .sort_by_key(|(header_part_pos, (_var, _var_metadata)): &(usize, (&Variable, ComputedVariableMetadata))| *header_part_pos);
         // Remove the header positions of the variables
         let vars_metadata: Vec<(&'a Variable, ComputedVariableMetadata)> = vars_metadata.into_iter().map(|x| x.1).collect();
 
         // Returns the meta data only
-        Ok(ComputedDataSetMetadata{
+        Ok(ComputedDataSetMetadata {
             header_required_size: header_required_size,
             header_zero_padding_size: header_size - header_required_size,
             vars_metadata: vars_metadata,
@@ -791,8 +807,7 @@ impl<'a> ComputedDataSetMetadata<'a> {
     }
 
     /// Computes and returns the size (number of bytes) needed to write the file header.
-    fn compute_header_required_size(data_set: &'a DataSet, version: Version) -> usize
-    {
+    fn compute_header_required_size(data_set: &'a DataSet, version: Version) -> usize {
         fn compute_name_string_size(name: &str) -> usize {
             let mut num_bytes: usize = 0;
             // the number bytes for the name
@@ -810,8 +825,7 @@ impl<'a> ComputedDataSetMetadata<'a> {
             // the global attributes
             if attrs_list.is_empty() {
                 num_bytes += ABSENT_TAG.len();
-            }
-            else {
+            } else {
                 // the tag `ATTRIBUTE_TAG`
                 num_bytes += ATTRIBUTE_TAG.len();
                 // the number of attributes
@@ -843,8 +857,7 @@ impl<'a> ComputedDataSetMetadata<'a> {
         if data_set.dims.is_empty() {
             // the tag `ABSENT_TAG`
             num_bytes += ABSENT_TAG.len();
-        }
-        else {
+        } else {
             // the tag `DIMENSION_TAG`
             num_bytes += DIMENSION_TAG.len();
             // the number of dimensions
@@ -861,8 +874,7 @@ impl<'a> ComputedDataSetMetadata<'a> {
         // the variables list
         if data_set.vars.is_empty() {
             num_bytes += ABSENT_TAG.len();
-        }
-        else {
+        } else {
             num_bytes += VARIABLE_TAG.len();
             // the number of variables
             num_bytes += std::mem::size_of::<i32>();

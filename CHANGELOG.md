@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased] - [unreleased]
+
+### Added
+
+- Initialize and apply the *Rust* formatter `rustfmt` to the source code.
+
 ## 0.5.2 - 2022-02-14
 
 ### Changed

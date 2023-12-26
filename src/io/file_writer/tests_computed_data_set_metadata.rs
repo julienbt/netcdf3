@@ -1,20 +1,13 @@
 #![cfg(test)]
 
-use crate::{
-    DataSet, Version,
-    FileReader,
-};
+use crate::{DataSet, FileReader, Version};
 
 use super::ComputedDataSetMetadata;
 
-use copy_to_tmp_file::{
-    copy_bytes_to_tmp_file,
-    NC3_CLASSIC_FILE_NAME, NC3_CLASSIC_FILE_BYTES,
-};
+use copy_to_tmp_file::{copy_bytes_to_tmp_file, NC3_CLASSIC_FILE_BYTES, NC3_CLASSIC_FILE_NAME};
 
 #[test]
 fn test_compute_header_required_size() {
-
     const EXPECTED_HEADER_SIZE: usize = 1_684;
 
     let (data_set, version): (DataSet, Version) = {
@@ -26,5 +19,5 @@ fn test_compute_header_required_size() {
     };
 
     let header_size: usize = ComputedDataSetMetadata::compute_header_required_size(&data_set, version);
-    assert_eq!(EXPECTED_HEADER_SIZE,        header_size);
+    assert_eq!(EXPECTED_HEADER_SIZE, header_size);
 }
