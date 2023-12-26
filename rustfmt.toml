@@ -1,0 +1,5 @@
+hard_tabs = false
+tab_spaces = 4
+max_width = 140
+use_small_heuristics = "Default"
+match_block_trailing_comma = true
