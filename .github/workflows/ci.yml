@@ -26,9 +26,6 @@ jobs:
           profile: minimal
           override: true
 
-      # - name: Cache
-      #   uses: Swatinem/rust-cache@v1
-
       - name: Build
         uses: actions-rs/cargo@v1
         with:
@@ -41,111 +38,58 @@ jobs:
           command: test
           args: --verbose
 
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+      - name: Install rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          profile: minimal
+          override: true
+      - name: Install grcov
+        run:  curl -L https://github.com/mozilla/grcov/releases/download/v0.8.6/grcov-v0.8.6-x86_64-unknown-linux-gnu.tar.gz | tar zxf -
+      - name: Build
+        run: cargo build --verbose
+        env:
+          CARGO_INCREMENTAL: '0'
+          RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort'
+          RUSTDOCFLAGS: '-Cpanic=abort'
+      - name: Run tests
+        run: cargo test --verbose
+        env:
+          CARGO_INCREMENTAL: '0'
+          RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort'
+          RUSTDOCFLAGS: '-Cpanic=abort'
+      - name: Run grcov
+        run: zip -0 ccov.zip `find . \( -name "netcdf3*.gc*" \) -print`;
+            ./grcov ccov.zip -s . -t lcov --llvm --branch --ignore-not-existing --ignore "/*" -o lcov.info;
+            bash <(curl -s https://codecov.io/bash) -f lcov.info;
+          
+    # bench:
+    #   name: Bench
+    #   runs-on: ubuntu-latest
 
-  # bench:
-  #   name: Bench
-  #   runs-on: ubuntu-latest
+    #   - name: Install rust
+    #     uses: actions-rs/toolchain@v1
+    #     with:
+    #       toolchain: nightly
+    #       profile: minimal
+    #       override: true
 
-  #   steps:
-  #     - name: Checkout sources
-  #       uses: actions/checkout@v2
+    #   - name: Compile bench
+    #     uses: actions-rs/cargo@v1
+    #     with:
+    #       command: bench
+    #       args: --verbose --no-run
 
-  #     - name: Install rust
-  #       uses: actions-rs/toolchain@v1
-  #       with:
-  #         toolchain: nightly
-  #         profile: minimal
-  #         override: true
+    #   - name: Run bench
+    #     uses: actions-rs/cargo@v1
+    #     with:
+    #       command: bench
+    #       args: --verbose
 
-  #     - name: Cache
-  #       uses: Swatinem/rust-cache@v1
 
-  #     - name: Compile bench
-  #       uses: actions-rs/cargo@v1
-  #       with:
-  #         command: bench
-  #         args: --verbose --no-run --features ""
-
-  #     - name: Run bench
-  #       uses: actions-rs/cargo@v1
-  #       with:
-  #         command: bench
-  #         args: --verbose --features ""
-
-  # doc:
-  #   name: Build documentation
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #     - name: Checkout sources
-  #       uses: actions/checkout@v2
-
-  #     - name: Install rust
-  #       uses: actions-rs/toolchain@v1
-  #       with:
-  #         toolchain: nightly
-  #         profile: minimal
-  #         override: true
-
-  #     - name: Build
-  #       env:
-  #         RUSTDOCFLAGS: -D warnings
-  #       run: cargo doc --no-deps --document-private-items --workspace --verbose --features "std docsrs"
-
-  # fmt:
-  #   name: Check formatting
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #     - name: Checkout sources
-  #       uses: actions/checkout@v2
-
-  #     - name: Install rust
-  #       uses: actions-rs/toolchain@v1
-  #       with:
-  #         toolchain: stable
-  #         components: rustfmt
-  #         profile: minimal
-  #         override: true
-
-  #     - name: cargo fmt -- --check
-  #       continue-on-error: true
-  #       uses: actions-rs/cargo@v1
-  #       with:
-  #         command: fmt
-  #         args: -- --check
-
-  # coverage:
-  #   name: Coverage
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #     - name: Checkout sources
-  #       uses: actions/checkout@v2
-
-  #     - name: Install rust
-  #       uses: actions-rs/toolchain@v1
-  #       with:
-  #         toolchain: stable
-  #         profile: minimal
-  #         override: true
-
-  #     - name: Cache
-  #       uses: Swatinem/rust-cache@v1
-
-  #     - name: Install cargo-tarpaulin
-  #       uses: actions-rs/cargo@v1
-  #       with:
-  #         command: install
-  #         args: cargo-tarpaulin
-
-  #     - name: Run cargo tarpaulin
-  #       uses: actions-rs/cargo@v1
-  #       with:
-  #         command: tarpaulin
-  #         args: --output-dir coverage --out Lcov
-      
-  #     - name: Publish to Coveralls
-  #       uses: coverallsapp/github-action@master
-  #       with:
-  #         github-token: ${{ secrets.GITHUB_TOKEN }}
