@@ -5,7 +5,7 @@
 [![Documentation](https://docs.rs/netcdf3/badge.svg)](https://docs.rs/netcdf3)
 [![Build Status](https://travis-ci.com/julienbt/netcdf3.svg?branch=main)](https://app.travis-ci.com/github/julienbt/netcdf3)
 [![codecov](https://codecov.io/gh/julienbt/netcdf3/branch/main/graph/badge.svg?token=XTHF1A50ZG)](https://codecov.io/gh/julienbt/netcdf3)
-[![Minimum rustc version](https://img.shields.io/badge/rustc-1.44.0+-lightgray.svg)](#rust-version-requirements)
+[![Minimum rustc version](https://img.shields.io/badge/rustc-1.51.0+-lightgray.svg)](#rust-version-requirements)
 
 ## Description
 

@@ -5,6 +5,11 @@
 ### Added
 
 - Initialize and apply the *Rust* formatter `rustfmt` to the source code.
+- Initialize the *GitHub* CI workflows
+
+### Changed
+
+- Upgrade the minimum version of rustc  from *1.44.0* to *1.51.0*
 
 ## 0.5.2 - 2022-02-14
 
