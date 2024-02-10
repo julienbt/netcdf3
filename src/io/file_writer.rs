@@ -704,6 +704,7 @@ impl <'a> HeaderDefinition<'a> {
 #[derive(Debug)]
 struct  ComputedDataSetMetadata<'a> {
     /// The number of bytes required for the header (containing useful bytes)
+    #[allow(dead_code)]
     header_required_size: usize,
     /// The number of the bytes of the zero padding append to the header
     header_zero_padding_size: usize,
