@@ -161,6 +161,17 @@ macro_rules! impl_write_typed_chunk_nc_fill {
     };
 }
 
+pub trait SeekWrite: Seek + Write {}
+impl<T: Seek + Write> SeekWrite for T {}
+
+impl core::fmt::Debug for dyn SeekWrite
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error>
+    {
+        write!(f, "{:p}", self)
+    }
+}
+
 /// Allows to write NetCDF-3 files (the *classic* and the *64-bit offset* versions).
 ///
 /// # Example
@@ -240,8 +251,8 @@ pub struct FileWriter<'a>
 {
     /// Path of the output file
     output_file_path: PathBuf,
-    /// Opened file on the file system
-    output_file: std::fs::File,
+    /// Opened file
+    output_file: Box<dyn SeekWrite>,
     /// Defintion of the data set.
     header_def: Option<HeaderDefinition<'a>>,
     /// List of already written records of each variable
@@ -249,6 +260,18 @@ pub struct FileWriter<'a>
 }
 
 impl<'a> FileWriter<'a> {
+    /// Opens output for writing.
+    pub fn open_seek_write(file_name: &str, output: Box<dyn SeekWrite>) -> Result<Self, WriteError>
+    {
+        let path: PathBuf = PathBuf::from(file_name);
+
+        Ok(FileWriter{
+            output_file: output,
+            output_file_path: path,
+            header_def: None,
+            written_records: vec![],
+        })
+    }
 
     /// Opens and overwrites an existing NetCDF-3 file or creates one.
      pub fn open<P: std::convert::AsRef<Path>>(output_file_path: P) -> Result<FileWriter<'a>, WriteError> {
@@ -266,7 +289,7 @@ impl<'a> FileWriter<'a> {
             .append(false)
             .open(output_file_path.clone())?;
         Ok(FileWriter{
-            output_file: output_file,
+            output_file: Box::new(output_file),
             output_file_path: output_file_path,
             header_def: None,
             written_records: vec![],
@@ -290,7 +313,7 @@ impl<'a> FileWriter<'a> {
             .create_new(true)
             .open(output_file_path.clone())?;
         Ok(FileWriter{
-            output_file: output_file,
+            output_file: Box::new(output_file),
             output_file_path: output_file_path,
             header_def: None,
             written_records: vec![],
@@ -704,6 +727,7 @@ impl <'a> HeaderDefinition<'a> {
 #[derive(Debug)]
 struct  ComputedDataSetMetadata<'a> {
     /// The number of bytes required for the header (containing useful bytes)
+    #[allow(dead_code)]
     header_required_size: usize,
     /// The number of the bytes of the zero padding append to the header
     header_zero_padding_size: usize,

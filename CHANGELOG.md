@@ -4,6 +4,10 @@
 
 ### Changed
 
+- Add methods for more flexible input and output.
+
+## 0.5.2 - 2022-02-14
+
 - Move all unit tests into `tests.rs` files to not reduce the code coverage involuntarily.
 - Upgrade the version of the dependency `nom` to *7.1.0*.
 

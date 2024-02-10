@@ -3,7 +3,7 @@
 //!
 //! One of theses file has been produced with the Rust crate `netcdf3`
 //! while the other file has been produced with the Python package [`netCDF4`](https://github.com/Unidata/netcdf4-python).
-use std::io::Read;
+use std::io::{BufWriter, Read, Seek, Write};
 use std::path::Path;
 
 use tempdir::TempDir;
@@ -307,6 +307,44 @@ fn test_write_file_nc3_classic() {
     let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
     let output_file_path = tmp_dir.path().join(NC3_CLASSIC_FILE_NAME);
     write_file_nc3_classic(&output_file_path);
+
+    // Compare the written file with the test data file
+    let written_bytes: Vec<u8> = {
+        let mut written_bytes: Vec<u8> = vec![];
+        let mut written_file: std::fs::File = std::fs::File::open(&output_file_path).unwrap();
+        written_file.read_to_end(&mut written_bytes).unwrap();
+        written_bytes
+    };
+    tmp_dir.close().unwrap();
+
+    assert_eq!(NC3_CLASSIC_FILE_BYTES.len(),   written_bytes.len());
+    assert_eq!(NC3_CLASSIC_FILE_BYTES,         &written_bytes[..]);
+}
+
+#[test]
+/// Test writing a file through an object that implements Seek and Write traits.
+fn test_write_file_nc3_classic_seek_write() {
+    fn write_file_nc3_classic<W: Seek + Write + 'static>(file_path: &str, writer: W) {
+        let data_set: DataSet = {
+            let mut data_set: DataSet = init_temperatures_definition();
+            data_set.add_global_attr_string("title", "Example of NETCDF3_CLASSIC file").unwrap();
+            data_set.add_global_attr_string("Conventions", "CF-1.8").unwrap();
+            data_set
+        };
+
+        let mut file_writer: FileWriter = FileWriter::open_seek_write(file_path, Box::new(writer)).unwrap();
+        file_writer.set_def(&data_set, Version::Classic, 0).unwrap();
+        write_temperatures_data(&mut file_writer);
+        file_writer.close().unwrap();
+    }
+
+    // Write the NetCDF-3 file
+    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let output_file_path = tmp_dir.path().join(NC3_CLASSIC_FILE_NAME);
+    let temp_file = std::fs::File::create(&output_file_path).unwrap();
+    // BufWriter implements the Seek and Write traits
+    let writer = BufWriter::new(temp_file);
+    write_file_nc3_classic(&output_file_path.to_str().unwrap(), writer);
 
     // Compare the written file with the test data file
     let written_bytes: Vec<u8> = {
