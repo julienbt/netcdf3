@@ -4,7 +4,7 @@
 
 ### Changed
 
-- Add methods for using various types of input.
+- Add methods for more flexible input and output.
 
 ## 0.5.2 - 2022-02-14
 
