@@ -98,7 +98,7 @@ fn test_read_file_nc3_classic() {
 }
 
 #[test]
-/// Test reading files through an input that implement Seek and Read traits.
+/// Test reading a file through an input that implement Seek and Read traits.
 fn test_read_file_nc3_classic_with_seek_read() {
 
     // Create a cursor (implements Seek and Read traits) for reading they NetCDF-3 bytes.

@@ -1,5 +1,3 @@
-mod tests_file_reader;
-
 use std::fmt::Debug;
 use std::convert::TryFrom;
 use std::rc::Rc;
@@ -48,6 +46,14 @@ use crate::{
 
 pub trait SeekRead: Seek + Read {}
 impl<T: Seek + Read> SeekRead for T {}
+
+impl Debug for dyn SeekRead
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error>
+    {
+        write!(f, "{:p}", self)
+    }
+}
 
 /// Allows to read NetCDF-3 files (the *classic* and the *64-bit offset* versions).
 ///
@@ -215,14 +221,6 @@ pub struct FileReader {
     input_file_path: PathBuf,
     input_file: Box<dyn SeekRead>,
     vars_info: Vec<VariableParsedMetadata>
-}
-
-impl Debug for dyn SeekRead
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error>
-    {
-        write!(f, "{:p}", self)
-    }
 }
 
 macro_rules! impl_read_typed_var {
