@@ -1,17 +1,17 @@
 mod tests;
 
 /// Name of the `DataType::I8` (a.k.a. `NC_BYTE`) used in the NetCDF C-API.
-const I8_TYPE_C_API_NAME: &'static str = "NC_BYTE";
+const I8_TYPE_C_API_NAME: &str = "NC_BYTE";
 /// Name of the `DataType::U8` (a.k.a. `NC_CHAR`) used in the NetCDF C-API.
-const U8_TYPE_C_API_NAME: &'static str = "NC_CHAR";
+const U8_TYPE_C_API_NAME: &str = "NC_CHAR";
 /// Name of the `DataType::I16` (a.k.a. `NC_SHORT`) used in the NetCDF C-API.
-const I16_TYPE_C_API_NAME: &'static str = "NC_SHORT";
+const I16_TYPE_C_API_NAME: &str = "NC_SHORT";
 /// Name of the `DataType::I32` (a.k.a. `NC_INT`) used in the NetCDF C-API.
-const I32_TYPE_C_API_NAME: &'static str = "NC_INT";
+const I32_TYPE_C_API_NAME: &str = "NC_INT";
 /// Name of the `DataType::F32` (a.k.a. `NC_FLOAT`) used in the NetCDF C-API.
-const F32_TYPE_C_API_NAME: &'static str = "NC_FLOAT";
+const F32_TYPE_C_API_NAME: &str = "NC_FLOAT";
 /// Name of the `DataType::F64` (a.k.a. `NC_DOUBLE`) used in the NetCDF C-API.
-const F64_TYPE_C_API_NAME: &'static str = "NC_DOUBLE";
+const F64_TYPE_C_API_NAME: &str = "NC_DOUBLE";
 
 /// All the data types supported by the NetCDF-3 format
 ///

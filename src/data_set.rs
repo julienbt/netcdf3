@@ -117,7 +117,7 @@ pub const NC_FILL_F64: f64 = 9.9692099683868690e+36;
 /// assert_eq!(false,                   data_set.has_dim(DIM_NAME));
 /// assert_eq!(None,                    data_set.dim_size(DIM_NAME));
 /// ```
-pub const NC_MAX_DIM_SIZE: usize = (std::i32::MAX - 3) as usize;
+pub const NC_MAX_DIM_SIZE: usize = (i32::MAX - 3) as usize;
 
 /// Maximum number of dimensions per variable
 ///
@@ -286,17 +286,12 @@ impl DataSet {
         dim_size: usize,
     ) -> Result<(), InvalidDataSet> {
         let dim_name: &str = dim_name.as_ref();
-        if self
-            .dims
-            .iter()
-            .position(|dim| *dim.name.borrow() == dim_name)
-            .is_some()
-        {
+        if self.dims.iter().any(|dim| *dim.name.borrow() == dim_name) {
             return Err(InvalidDataSet::DimensionAlreadyExists(dim_name.to_string()));
         }
         let new_fixed_size_dim = Rc::new(Dimension::new_fixed_size(dim_name, dim_size)?);
         self.dims.push(new_fixed_size_dim);
-        return Ok(());
+        Ok(())
     }
 
     /// Initializes the *unlimited size* dimension of the dataset.
@@ -315,23 +310,18 @@ impl DataSet {
                 unlimited_dim.name(),
             ));
         }
-        if self
-            .dims
-            .iter()
-            .position(|dim| *dim.name.borrow() == dim_name)
-            .is_some()
-        {
+        if self.dims.iter().any(|dim| *dim.name.borrow() == dim_name) {
             return Err(InvalidDataSet::DimensionAlreadyExists(dim_name.to_string()));
         }
         let new_unlimited_dim = Rc::new(Dimension::new_unlimited_size(dim_name, dim_size)?);
         self.dims.push(Rc::clone(&new_unlimited_dim));
         self.unlimited_dim = Some(new_unlimited_dim);
-        return Ok(());
+        Ok(())
     }
 
     /// Returns the number of dimensions defined in the data set.
     pub fn num_dims(&self) -> usize {
-        return self.dims.len();
+        self.dims.len()
     }
 
     /// Returns :
@@ -339,7 +329,7 @@ impl DataSet {
     ///  - `true` if the dimension is defined.
     ///  - `false` otherwise.
     pub fn has_dim(&self, dim_name: &str) -> bool {
-        return self.find_dim_from_name(dim_name).is_some();
+        self.find_dim_from_name(dim_name).is_some()
     }
 
     /// Returns a reference to the dimension.
@@ -352,11 +342,10 @@ impl DataSet {
 
     /// Returns the references of all the dimensions defined in the data set.
     pub fn get_dims(&self) -> Vec<Rc<Dimension>> {
-        return self
-            .dims
+        self.dims
             .iter()
             .map(|dim: &Rc<Dimension>| Rc::clone(dim))
-            .collect();
+            .collect()
     }
 
     /// Returns the names all the dimensions defined in the data set.
@@ -366,17 +355,16 @@ impl DataSet {
 
     /// Returns `true` if the *unlimited-size* dimension exists.
     pub fn has_unlimited_dim(&self) -> bool {
-        return self.unlimited_dim.is_some();
+        self.unlimited_dim.is_some()
     }
 
     /// Returns the *unlimited-size* dimension if it is defined, otherwise return `None`.
     ///
     /// Returns `None` if the *unlimited-size* dimension does not exist.
     pub fn get_unlimited_dim(&self) -> Option<Rc<Dimension>> {
-        return self
-            .unlimited_dim
+        self.unlimited_dim
             .as_ref()
-            .map(|rc_dim: &Rc<Dimension>| Rc::clone(rc_dim));
+            .map(|rc_dim: &Rc<Dimension>| Rc::clone(rc_dim))
     }
 
     /// Returns the length of the dimension.
@@ -427,7 +415,7 @@ impl DataSet {
         if removed_dim.is_unlimited() {
             self.unlimited_dim = None;
         }
-        return Ok(removed_dim);
+        Ok(removed_dim)
     }
 
     /// Rename the dimension or return en error if :
@@ -466,20 +454,17 @@ impl DataSet {
 
         let mut dim_name: RefMut<String> = renamed_dim.name.borrow_mut();
         *dim_name = new_dim_name.to_string();
-        return Ok(());
+        Ok(())
     }
 
     /// Find a dataset's dimension from is name.
     fn find_dim_from_name(&self, dim_name: &str) -> Option<(usize, &Rc<Dimension>)> {
-        return self
-            .dims
+        self.dims
             .iter()
             .position(|dim| {
                 return dim.name.borrow().deref() == dim_name;
             })
-            .map(|index| {
-                return (index, &self.dims[index]);
-            });
+            .map(|index| (index, &self.dims[index]))
     }
 
     pub fn get_dims_from_dim_ids(
@@ -490,7 +475,7 @@ impl DataSet {
         let not_found_dim_ids: Vec<usize> = dim_ids
             .iter()
             .filter(|dim_id: &&usize| self.dims.get(**dim_id).is_none())
-            .map(|i| i.clone())
+            .copied()
             .collect();
         if !not_found_dim_ids.is_empty() {
             return Err(InvalidDataSet::DimensionIdsNotFound {
@@ -589,8 +574,7 @@ impl DataSet {
         if self.find_var_from_name(var_name).is_ok() {
             return Err(InvalidDataSet::VariableAlreadyExists(var_name.to_string()));
         }
-        let var_dims: Vec<Rc<Dimension>> =
-            var_dims.into_iter().map(|ref dim| Rc::clone(dim)).collect();
+        let var_dims: Vec<Rc<Dimension>> = var_dims.into_iter().map(Rc::clone).collect();
         self.add_var_using_dim_refs(var_name, var_dims, data_type.clone())?;
         Ok(())
     }
@@ -601,8 +585,7 @@ impl DataSet {
         var_dims: Vec<Rc<Dimension>>,
         data_type: DataType,
     ) -> Result<&Variable, InvalidDataSet> {
-        let _ = self
-            .vars
+        self.vars
             .push(Variable::new(var_name, var_dims, data_type)?);
         Ok(self.vars.last().unwrap())
     }
@@ -670,61 +653,55 @@ impl DataSet {
     ///  - `true` if the variable is defined.
     ///  - `false` otherwise.
     pub fn has_var(&self, var_name: &str) -> bool {
-        return self.find_var_from_name(var_name).is_ok();
+        self.find_var_from_name(var_name).is_ok()
     }
 
     pub fn is_record_var(&self, var_name: &str) -> Option<bool> {
-        return self
-            .find_var_from_name(var_name)
+        self.find_var_from_name(var_name)
             .map(|(_var_index, var): (usize, &Variable)| var.is_record_var())
-            .ok();
+            .ok()
     }
 
     /// Returns the length (total number of elements) of the variable.
     pub fn var_len(&self, var_name: &str) -> Option<usize> {
-        return self
-            .find_var_from_name(var_name)
+        self.find_var_from_name(var_name)
             .map(|(_var_index, var): (usize, &Variable)| var.len())
-            .ok();
+            .ok()
     }
 
     /// Returns the data type of the variable, or `None`.
     pub fn var_data_type(&self, var_name: &str) -> Option<DataType> {
-        return self
-            .find_var_from_name(var_name)
+        self.find_var_from_name(var_name)
             .map(|(_var_index, var): (usize, &Variable)| var.data_type())
-            .ok();
+            .ok()
     }
 
     /// Returns a reference to the variable, or `None`.
     pub fn get_var(&self, var_name: &str) -> Option<&Variable> {
-        return self
-            .find_var_from_name(var_name)
+        self.find_var_from_name(var_name)
             .map(|(_var_index, var): (usize, &Variable)| var)
-            .ok();
+            .ok()
     }
 
     /// Returns a mutable reference to the variable
     pub fn get_var_mut(&mut self, var_name: &str) -> Option<&mut Variable> {
-        return self
-            .find_var_from_name(var_name)
+        self.find_var_from_name(var_name)
             .map(|(var_index, _ref_var)| var_index)
             .map(move |var_index: usize| &mut self.vars[var_index])
-            .ok();
+            .ok()
     }
 
     /// Returns the references all the variables defined in the dataset.
     pub fn get_vars(&self) -> Vec<&Variable> {
-        return self.vars.iter().collect();
+        self.vars.iter().collect()
     }
 
     /// Returns the names all the variables defined in the dataset.
     pub fn get_var_names(&self) -> Vec<String> {
-        return self
-            .vars
+        self.vars
             .iter()
             .map(|var: &Variable| var.name().to_string())
-            .collect();
+            .collect()
     }
 
     /// Renames a variable.
@@ -754,19 +731,19 @@ impl DataSet {
             ));
         }
         // Check the validity of the new name
-        let _ = Variable::check_var_name(new_var_name)?;
+        Variable::check_var_name(new_var_name)?;
 
         // Then rename the variable
         self.vars[renamed_var_index].name = new_var_name.to_string();
 
-        return Ok(());
+        Ok(())
     }
 
     /// Remove the variable.
     pub fn remove_var(&mut self, var_name: &str) -> Result<Variable, InvalidDataSet> {
         let var_index: usize = self.find_var_from_name(var_name)?.0;
         let removed_var: Variable = self.vars.remove(var_index);
-        return Ok(removed_var);
+        Ok(removed_var)
     }
 
     /// Finds the dataset's variable from his name, and returns a tuple containing :
@@ -777,12 +754,11 @@ impl DataSet {
         &self,
         var_name: &str,
     ) -> Result<(usize, &Variable), InvalidDataSet> {
-        return self
-            .vars
+        self.vars
             .iter()
             .position(|var: &Variable| var.name == var_name)
             .map(|var_index| (var_index, &self.vars[var_index]))
-            .ok_or(InvalidDataSet::VariableNotDefined(var_name.to_string()));
+            .ok_or(InvalidDataSet::VariableNotDefined(var_name.to_string()))
     }
 
     // ----------------------------------------------------------------
@@ -896,41 +872,38 @@ impl DataSet {
 
     /// Returns a reference of variable attribute.
     pub fn get_var_attr(&self, var_name: &str, attr_name: &str) -> Option<&Attribute> {
-        return self
-            .find_var_attr_from_name(var_name, attr_name)
+        self.find_var_attr_from_name(var_name, attr_name)
             .map(
                 |((_var_index, _var), (_attr_index, attr)): (
                     (usize, &Variable),
                     (usize, &Attribute),
                 )| { attr },
             )
-            .ok();
+            .ok()
     }
 
     /// Returns the length (number of elements) of the variable attribute.
     pub fn get_var_attr_len(&self, var_name: &str, attr_name: &str) -> Option<usize> {
-        return self
-            .find_var_attr_from_name(var_name, attr_name)
+        self.find_var_attr_from_name(var_name, attr_name)
             .map(
                 |((_var_index, _var), (_attr_index, attr)): (
                     (usize, &Variable),
                     (usize, &Attribute),
                 )| { attr.len() },
             )
-            .ok();
+            .ok()
     }
 
     /// Returns the data type of the variable attribute.
     pub fn get_var_attr_data_type(&self, var_name: &str, attr_name: &str) -> Option<DataType> {
-        return self
-            .find_var_attr_from_name(var_name, attr_name)
+        self.find_var_attr_from_name(var_name, attr_name)
             .map(
                 |((_var_index, _var), (_attr_index, attr)): (
                     (usize, &Variable),
                     (usize, &Attribute),
                 )| { attr.data_type() },
             )
-            .ok();
+            .ok()
     }
 
     /// Returns all attributes of a variable.
@@ -938,11 +911,10 @@ impl DataSet {
     /// Returns `None` if the variable is not defined.
     ///
     pub fn get_var_attrs(&self, var_name: &str) -> Option<Vec<&Attribute>> {
-        return self
-            .find_var_from_name(var_name)
+        self.find_var_from_name(var_name)
             .map(|(_var_index, ref_var): (usize, &Variable)| ref_var)
             .ok()
-            .map(|ref_var: &Variable| ref_var.get_attrs());
+            .map(|ref_var: &Variable| ref_var.get_attrs())
     }
 
     /// Returns :
@@ -950,20 +922,18 @@ impl DataSet {
     ///  - `true` if the variable attribute is defined.
     ///  - `false` otherwise.
     pub fn has_var_attr(&self, var_name: &str, attr_name: &str) -> Option<bool> {
-        return self
-            .find_var_from_name(var_name)
+        self.find_var_from_name(var_name)
             .map(|(_var_index, var): (usize, &Variable)| var.has_attr(attr_name))
-            .ok();
+            .ok()
     }
 
     /// Returns the number of attributes of the variable.
     ///
     /// Returns `None` if the variable does not exist.
     pub fn num_var_attrs(&self, var_name: &str) -> Option<usize> {
-        return self
-            .find_var_from_name(var_name)
+        self.find_var_from_name(var_name)
             .map(|(_var_index, var): (usize, &Variable)| var.num_attrs())
-            .ok();
+            .ok()
     }
 
     /// Rename the variable attribute.
@@ -1133,7 +1103,7 @@ impl DataSet {
                 attr_name.to_string(),
             ));
         }
-        let _ = Attribute::check_attr_name(attr_name).map_err(|invalid_attr_name: String| {
+        Attribute::check_attr_name(attr_name).map_err(|invalid_attr_name: String| {
             InvalidDataSet::GlobalAttributeNameNotValid(invalid_attr_name)
         })?;
         self.attrs.push(Attribute {
@@ -1154,7 +1124,7 @@ impl DataSet {
                 attr_name.to_string(),
             ));
         }
-        let _ = Attribute::check_attr_name(attr_name).map_err(|invalid_attr_name: String| {
+        Attribute::check_attr_name(attr_name).map_err(|invalid_attr_name: String| {
             InvalidDataSet::GlobalAttributeNameNotValid(invalid_attr_name)
         })?;
         self.attrs.push(Attribute {
@@ -1184,7 +1154,7 @@ impl DataSet {
                 attr_name.to_string(),
             ));
         }
-        let _ = Attribute::check_attr_name(attr_name).map_err(|invalid_attr_name: String| {
+        Attribute::check_attr_name(attr_name).map_err(|invalid_attr_name: String| {
             InvalidDataSet::GlobalAttributeNameNotValid(invalid_attr_name)
         })?;
         self.attrs.push(Attribute {
@@ -1205,7 +1175,7 @@ impl DataSet {
                 attr_name.to_string(),
             ));
         }
-        let _ = Attribute::check_attr_name(attr_name).map_err(|invalid_attr_name: String| {
+        Attribute::check_attr_name(attr_name).map_err(|invalid_attr_name: String| {
             InvalidDataSet::GlobalAttributeNameNotValid(invalid_attr_name)
         })?;
         self.attrs.push(Attribute {
@@ -1226,7 +1196,7 @@ impl DataSet {
                 attr_name.to_string(),
             ));
         }
-        let _ = Attribute::check_attr_name(attr_name).map_err(|invalid_attr_name: String| {
+        Attribute::check_attr_name(attr_name).map_err(|invalid_attr_name: String| {
             InvalidDataSet::GlobalAttributeNameNotValid(invalid_attr_name)
         })?;
         self.attrs.push(Attribute {
@@ -1247,7 +1217,7 @@ impl DataSet {
                 attr_name.to_string(),
             ));
         }
-        let _ = Attribute::check_attr_name(attr_name).map_err(|invalid_attr_name: String| {
+        Attribute::check_attr_name(attr_name).map_err(|invalid_attr_name: String| {
             InvalidDataSet::GlobalAttributeNameNotValid(invalid_attr_name)
         })?;
         self.attrs.push(Attribute {
@@ -1278,10 +1248,9 @@ impl DataSet {
         }
 
         // Check that the new name is a NetCDF-3 valid name
-        let _ =
-            Attribute::check_attr_name(new_attr_name).map_err(|invalid_attr_name: String| {
-                InvalidDataSet::GlobalAttributeNameNotValid(invalid_attr_name)
-            })?;
+        Attribute::check_attr_name(new_attr_name).map_err(|invalid_attr_name: String| {
+            InvalidDataSet::GlobalAttributeNameNotValid(invalid_attr_name)
+        })?;
 
         // Update the attribute name
         self.attrs[renamed_attr_index].name = new_attr_name.to_string();
@@ -1396,7 +1365,7 @@ impl DataSet {
     /// ```
     pub fn record_size(&self) -> Option<usize> {
         if !self.has_unlimited_dim() {
-            return None;
+            None
         } else {
             let (record_vars, _fixed_size_vars): (Vec<&Variable>, Vec<&Variable>) = self
                 .vars
@@ -1432,9 +1401,6 @@ impl DataSet {
     /// assert_eq!(Some(UNLIM_DIM_SIZE),    data_set.num_records());
     /// ```
     pub fn num_records(&self) -> Option<usize> {
-        match &self.unlimited_dim {
-            None => None,
-            Some(dim) => Some(dim.size()),
-        }
+        self.unlimited_dim.as_ref().map(|dim| dim.size())
     }
 }

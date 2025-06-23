@@ -110,95 +110,95 @@ impl DataVector {
     /// assert_eq!(None,                        data_vec.get_f64());
     /// ```
     pub fn get_i8(&self) -> Option<&[i8]> {
-        return match self {
+        match self {
             DataVector::I8(data) => Some(data),
             DataVector::U8(_) => None,
             DataVector::I16(_) => None,
             DataVector::I32(_) => None,
             DataVector::F32(_) => None,
             DataVector::F64(_) => None,
-        };
+        }
     }
 
     /// Returns a slice to the internal `Vec<u8>`.
     ///
     /// Also see the method [get_i8](enum.DataVector.html#method.get_i8).
     pub fn get_u8(&self) -> Option<&[u8]> {
-        return match self {
+        match self {
             DataVector::I8(_) => None,
             DataVector::U8(data) => Some(data),
             DataVector::I16(_) => None,
             DataVector::I32(_) => None,
             DataVector::F32(_) => None,
             DataVector::F64(_) => None,
-        };
+        }
     }
 
     pub(crate) fn get_as_string(&self) -> Option<String> {
-        return match self {
+        match self {
             DataVector::I8(_) => None,
             DataVector::U8(data) => String::from_utf8(data.to_vec()).ok(),
             DataVector::I16(_) => None,
             DataVector::I32(_) => None,
             DataVector::F32(_) => None,
             DataVector::F64(_) => None,
-        };
+        }
     }
 
     /// Returns a slice to the internal `Vec<i16>`.
     ///
     /// Also see the method [get_i8](enum.DataVector.html#method.get_i8).
     pub fn get_i16(&self) -> Option<&[i16]> {
-        return match self {
+        match self {
             DataVector::I8(_) => None,
             DataVector::U8(_) => None,
             DataVector::I16(data) => Some(data),
             DataVector::I32(_) => None,
             DataVector::F32(_) => None,
             DataVector::F64(_) => None,
-        };
+        }
     }
 
     /// Returns a slice to the internal `Vec<i32>`.
     ///
     /// Also see the method [get_i8](enum.DataVector.html#method.get_i8).
     pub fn get_i32(&self) -> Option<&[i32]> {
-        return match self {
+        match self {
             DataVector::I8(_) => None,
             DataVector::U8(_) => None,
             DataVector::I16(_) => None,
             DataVector::I32(data) => Some(data),
             DataVector::F32(_) => None,
             DataVector::F64(_) => None,
-        };
+        }
     }
 
     /// Returns a slice to the internal `Vec<f32>`.
     ///
     /// Also see the method [get_i8](enum.DataVector.html#method.get_i8).
     pub fn get_f32(&self) -> Option<&[f32]> {
-        return match self {
+        match self {
             DataVector::I8(_) => None,
             DataVector::U8(_) => None,
             DataVector::I16(_) => None,
             DataVector::I32(_) => None,
             DataVector::F32(data) => Some(data),
             DataVector::F64(_) => None,
-        };
+        }
     }
 
     /// Returns a slice to the internal `Vec<f64>`.
     ///
     /// Also see the method [get_i8](enum.DataVector.html#method.get_i8).
     pub fn get_f64(&self) -> Option<&[f64]> {
-        return match self {
+        match self {
             DataVector::I8(_) => None,
             DataVector::U8(_) => None,
             DataVector::I16(_) => None,
             DataVector::I32(_) => None,
             DataVector::F32(_) => None,
             DataVector::F64(data) => Some(data),
-        };
+        }
     }
 
     /// Returns the internal `Vec<i8>` if the `DataVector` contains one.
@@ -237,41 +237,41 @@ impl DataVector {
         if let DataVector::I8(data) = self {
             return Ok(data);
         }
-        return Err(self);
+        Err(self)
     }
 
     pub fn get_u8_into(self) -> Result<Vec<u8>, DataVector> {
         if let DataVector::U8(data) = self {
             return Ok(data);
         }
-        return Err(self);
+        Err(self)
     }
 
     pub fn get_i16_into(self) -> Result<Vec<i16>, DataVector> {
         if let DataVector::I16(data) = self {
             return Ok(data);
         }
-        return Err(self);
+        Err(self)
     }
 
     pub fn get_i32_into(self) -> Result<Vec<i32>, DataVector> {
         if let DataVector::I32(data) = self {
             return Ok(data);
         }
-        return Err(self);
+        Err(self)
     }
 
     pub fn get_f32_into(self) -> Result<Vec<f32>, DataVector> {
         if let DataVector::F32(data) = self {
             return Ok(data);
         }
-        return Err(self);
+        Err(self)
     }
 
     pub fn get_f64_into(self) -> Result<Vec<f64>, DataVector> {
         if let DataVector::F64(data) = self {
             return Ok(data);
         }
-        return Err(self);
+        Err(self)
     }
 }

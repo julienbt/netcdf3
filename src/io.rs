@@ -36,8 +36,8 @@ pub(crate) const ATTRIBUTE_TAG: [u8; 4] = [0, 0, 0, 0x0C];
 /// - `num_bytes` : the number of useful bytes
 pub fn compute_padding_size(num_bytes: usize) -> usize {
     const ALIGNMENT_SIZE: usize = 4;
-    return match num_bytes % 4 {
+    match num_bytes % 4 {
         0 => 0,
         n => ALIGNMENT_SIZE - n,
-    };
+    }
 }

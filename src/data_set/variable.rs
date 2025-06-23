@@ -131,11 +131,11 @@ impl Variable {
         data_type: DataType,
     ) -> Result<Variable, InvalidDataSet> {
         // Check if the name of the variable is a valid NetCDF-3 name.
-        let _ = Variable::check_var_name(var_name)?;
+        Variable::check_var_name(var_name)?;
 
         let unlimited_dim: Option<Rc<Dimension>> = match var_dims.first() {
             None => None,
-            Some(ref first_dim) => match first_dim.is_unlimited() {
+            Some(first_dim) => match first_dim.is_unlimited() {
                 false => None,
                 true => Some(Rc::clone(first_dim)),
             },
@@ -144,17 +144,17 @@ impl Variable {
 
         Ok(Variable {
             name: var_name.to_string(),
-            unlimited_dim: unlimited_dim,
+            unlimited_dim,
             dims: var_dims,
             attrs: vec![],
-            data_type: data_type,
+            data_type,
             // data: None,
         })
     }
 
     /// Return the name of the variable.
     pub fn name(&self) -> &str {
-        return &self.name;
+        &self.name
     }
 
     /// Returns the data type of the variable.
@@ -175,27 +175,23 @@ impl Variable {
     /// assert_eq!(DataType::I32,               var.data_type());
     /// ```
     pub fn data_type(&self) -> DataType {
-        return self.data_type.clone();
+        self.data_type.clone()
     }
 
     /// Returns the total number of elements.
     ///
     /// If the variable is a record variable then `len = num_chunks * chunk_len`.
     pub fn len(&self) -> usize {
-        return self.num_chunks() * self.chunk_len();
+        self.num_chunks() * self.chunk_len()
     }
 
     pub fn use_dim(&self, dim_name: &str) -> bool {
-        return self
-            .dims
-            .iter()
-            .position(|dim| *dim.name.borrow() == dim_name)
-            .is_some();
+        self.dims.iter().any(|dim| *dim.name.borrow() == dim_name)
     }
 
     /// Returns the number of dimensions (the rank) the the variables
     pub fn num_dims(&self) -> usize {
-        return self.dims.len();
+        self.dims.len()
     }
 
     /// Returns the list of the dimensions
@@ -224,7 +220,7 @@ impl Variable {
 
     /// Returns the number of attributes.
     pub fn num_attrs(&self) -> usize {
-        return self.attrs.len();
+        self.attrs.len()
     }
 
     /// Returns :
@@ -232,7 +228,7 @@ impl Variable {
     /// - `true` if the variable has the attribute
     /// - `false` if not
     pub fn has_attr(&self, attr_name: &str) -> bool {
-        return self.find_attr_from_name(attr_name).is_ok();
+        self.find_attr_from_name(attr_name).is_ok()
     }
 
     /// Returns the number of elements per chunk.
@@ -289,7 +285,7 @@ impl Variable {
         let mut chunk_size = self.chunk_len() * self.data_type.size_of();
         // append the bytes of the zero padding, if necessary
         chunk_size += compute_padding_size(chunk_size);
-        return chunk_size;
+        chunk_size
     }
 
     /// Returns the number of chunks.
@@ -305,25 +301,23 @@ impl Variable {
 
     /// Returns all attributs defined in the dataset or in the variable.
     pub fn get_attrs(&self) -> Vec<&Attribute> {
-        return self.attrs.iter().collect();
+        self.attrs.iter().collect()
     }
 
     /// Returns all attributs defined in the dataset or in the variable.
     pub fn get_attr_names(&self) -> Vec<String> {
-        return self
-            .attrs
+        self.attrs
             .iter()
             .map(|attr: &Attribute| attr.name().to_string())
-            .collect();
+            .collect()
     }
 
     /// Returns a reference counter to the named attribute, return an error if
     /// the attribute is not already defined.
     pub fn get_attr(&self, attr_name: &str) -> Option<&Attribute> {
-        return self
-            .find_attr_from_name(attr_name)
+        self.find_attr_from_name(attr_name)
             .map(|result: (usize, &Attribute)| result.1)
-            .ok();
+            .ok()
     }
 
     /// Returns the attribute value as a `&[i8]`.
@@ -395,7 +389,7 @@ impl Variable {
         }
         // append the new attribute
         self.attrs.push(new_attr);
-        return Ok(());
+        Ok(())
     }
 
     /// Append a new `i8` attribute.
@@ -548,14 +542,14 @@ impl Variable {
         })?;
         let renamed_attr: &mut Attribute = &mut self.attrs[renamed_attr_index];
         renamed_attr.name = new_attr_name.to_string();
-        return Ok(());
+        Ok(())
     }
 
     // Remove the attribute.
     pub fn remove_attr(&mut self, attr_name: &str) -> Result<Attribute, InvalidDataSet> {
         let removed_attr_index: usize = self.find_attr_from_name(attr_name)?.0;
         let removed_attr: Attribute = self.attrs.remove(removed_attr_index);
-        return Ok(removed_attr);
+        Ok(removed_attr)
     }
 
     /// Find a dataset's attribute from is name.
@@ -571,7 +565,7 @@ impl Variable {
             })
             .map(|index| {
                 // Then get the referance to the attribute
-                return (index, &self.attrs[index]);
+                (index, &self.attrs[index])
             })
             .ok_or(InvalidDataSet::VariableAttributeNotDefined {
                 var_name: self.name.to_string(),
@@ -580,16 +574,13 @@ impl Variable {
     }
 
     pub(super) fn check_var_name(var_name: &str) -> Result<(), InvalidDataSet> {
-        return match is_valid_name(var_name) {
+        match is_valid_name(var_name) {
             true => Ok(()),
             false => Err(InvalidDataSet::VariableNameNotValid(var_name.to_string())),
-        };
+        }
     }
 
-    fn check_dims_validity(
-        var_name: &str,
-        dims: &Vec<Rc<Dimension>>,
-    ) -> Result<(), InvalidDataSet> {
+    fn check_dims_validity(var_name: &str, dims: &[Rc<Dimension>]) -> Result<(), InvalidDataSet> {
         if dims.is_empty() {
             return Ok(());
         }
@@ -618,7 +609,7 @@ impl Variable {
                 .collect();
             repeated_dim_names.extend(i32ernal_repeated_dim_names.into_iter());
         }
-        let repeated_dim_names = HashSet::<String>::from_iter(repeated_dim_names.into_iter());
+        let repeated_dim_names = HashSet::<String>::from_iter(repeated_dim_names);
         if !repeated_dim_names.is_empty() {
             let dim_names: Vec<String> =
                 dims.iter().map(|dim: &Rc<Dimension>| dim.name()).collect();

@@ -267,7 +267,7 @@ impl Attribute {
         Attribute::check_attr_name(name)?;
         Ok(Attribute {
             name: name.to_string(),
-            data: data,
+            data,
         })
     }
     /// Creates a new attribute containing i8 data.

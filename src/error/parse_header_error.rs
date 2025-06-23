@@ -9,18 +9,15 @@ pub struct ParseHeaderError {
 }
 
 impl ParseHeaderError {
-    pub(crate) fn new<'a>(err: NomError<'a>, kind: ParseHeaderErrorKind) -> Self {
+    pub(crate) fn new(err: NomError<'_>, kind: ParseHeaderErrorKind) -> Self {
         Self {
-            kind: kind,
+            kind,
             invalid_bytes: InvalidBytes::from(err),
         }
     }
 
     pub fn header_is_incomplete(&self) -> bool {
-        match self.invalid_bytes {
-            InvalidBytes::Incomplete(_) => true,
-            _ => false,
-        }
+        matches!(self.invalid_bytes, InvalidBytes::Incomplete(_))
     }
 }
 

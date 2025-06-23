@@ -152,28 +152,28 @@ pub enum DimensionType {
 impl DimensionSize {
     /// Create a new *unlimited* or *fixed* size.
     pub(in crate::data_set) fn new(size: usize, r#type: DimensionType) -> DimensionSize {
-        return match r#type {
+        match r#type {
             DimensionType::FixedSize => DimensionSize::Fixed(size),
             DimensionType::UnlimitedSize => DimensionSize::Unlimited(RefCell::new(size)),
-        };
+        }
     }
 
     #[inline]
     /// Return the size of the dimension.
     pub(in crate::data_set) fn size(&self) -> usize {
-        return match self {
-            DimensionSize::Unlimited(size) => size.borrow().clone(),
-            DimensionSize::Fixed(size) => size.clone(),
-        };
+        match self {
+            DimensionSize::Unlimited(size) => *size.borrow(),
+            DimensionSize::Fixed(size) => *size,
+        }
     }
 
     #[inline]
     /// Return the size of the dimension.
     pub(in crate::data_set) fn r#type(&self) -> DimensionType {
-        return match self {
+        match self {
             DimensionSize::Unlimited(_) => DimensionType::UnlimitedSize,
             DimensionSize::Fixed(_) => DimensionType::FixedSize,
-        };
+        }
     }
 }
 
@@ -190,50 +190,50 @@ impl Dimension {
                 get: size,
             });
         }
-        return Ok(Dimension {
+        Ok(Dimension {
             name: RefCell::new(name.to_string()),
             size: DimensionSize::new(size, DimensionType::FixedSize),
-        });
+        })
     }
 
     /// Creates a new *unlimited size* NetCDF-3 dimension.
     pub(crate) fn new_unlimited_size(name: &str, size: usize) -> Result<Dimension, InvalidDataSet> {
         Dimension::check_dim_name(name)?;
-        return Ok(Dimension {
+        Ok(Dimension {
             name: RefCell::new(name.to_string()),
             size: DimensionSize::new(size, DimensionType::UnlimitedSize),
-        });
+        })
     }
 
     /// Returns the name of the NetCDF-3 dimension.
     pub fn name(&self) -> String {
-        return self.name.borrow().clone();
+        self.name.borrow().clone()
     }
 
     /// Returns the size of the NetCDF-3 dimension.
     pub fn size(&self) -> usize {
-        return self.size.size();
+        self.size.size()
     }
 
     /// Returns the dimension type (*fixed size* ou *unlimited size*) of the NetCDF-3 dimension.
     pub fn dim_type(&self) -> DimensionType {
-        return self.size.r#type();
+        self.size.r#type()
     }
 
     /// Returns `true` if the dimension is a *unlimited size* dimension, otherwise return `false`.
     pub fn is_unlimited(&self) -> bool {
-        return self.dim_type() == DimensionType::UnlimitedSize;
+        self.dim_type() == DimensionType::UnlimitedSize
     }
 
     /// Returns `true` if the dimension is a *fixed size* dimension, otherwise return `false`.
     pub fn is_fixed(&self) -> bool {
-        return self.dim_type() == DimensionType::FixedSize;
+        self.dim_type() == DimensionType::FixedSize
     }
 
     pub(in crate::data_set) fn check_dim_name(dim_name: &str) -> Result<(), InvalidDataSet> {
-        return match is_valid_name(dim_name) {
+        match is_valid_name(dim_name) {
             true => Ok(()),
             false => Err(InvalidDataSet::DimensionNameNotValid(dim_name.to_string())),
-        };
+        }
     }
 }

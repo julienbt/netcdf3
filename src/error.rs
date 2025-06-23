@@ -142,11 +142,11 @@ pub enum ReadError {
 
 impl ReadError {
     pub fn header_is_incomplete(&self) -> bool {
-        let header_is_incomlete: bool = match &self {
+        let header_is_incomplete: bool = match &self {
             ReadError::ParseHeader(parse_header_err) => parse_header_err.header_is_incomplete(),
             _ => false,
         };
-        return header_is_incomlete;
+        header_is_incomplete
     }
 }
 

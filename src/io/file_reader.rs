@@ -98,7 +98,7 @@ impl Debug for dyn SeekRead {
 /// // ------------------------
 /// assert_eq!(Version::Classic,                    file_reader.version());
 ///
-//// // Get the global attributes
+/// // Get the global attributes
 /// // --------------------------
 /// assert_eq!(2,                                   data_set.num_global_attrs());
 /// assert_eq!("Example of NETCDF3_CLASSIC file",   data_set.get_global_attr_as_string("title").unwrap());
@@ -255,16 +255,16 @@ macro_rules! impl_read_typed_record {
 impl FileReader {
     /// Returns the data set managed by the reader.
     pub fn data_set(&self) -> &DataSet {
-        return &self.data_set;
+        &self.data_set
     }
 
     pub fn version(&self) -> Version {
-        return self.version.clone();
+        self.version.clone()
     }
 
     /// Returns the data set managed by the reader.
     pub fn file_path(&self) -> &std::path::Path {
-        return &self.input_file_path;
+        &self.input_file_path
     }
 
     pub fn open_seek_read(
@@ -318,12 +318,11 @@ impl FileReader {
                 buffer.resize(new_buf_size, 0_u8);
                 let _num_of_bytes = input_file.read(&mut buffer[*start..*end])?;
 
+                // TODO: do not cast file_size to usize, instead make parse_header() work with u64
                 let parsing_result: Result<
                     (DataSet, Version, Vec<VariableParsedMetadata>),
                     ReadError,
-                >;
-                // TODO: do not cast file_size to usize, instead make parse_header() work with u64
-                parsing_result = FileReader::parse_header(&buffer, file_size as usize);
+                > = FileReader::parse_header(&buffer, file_size as usize);
                 match parsing_result {
                     Ok((data_set_2, version_2, vars_info_2)) => {
                         data_set = data_set_2;
@@ -349,13 +348,13 @@ impl FileReader {
         };
 
         // Return the result
-        return Ok(FileReader {
-            data_set: data_set,
-            version: version,
-            input_file_path: input_file_path,
-            input_file: input_file,
-            vars_info: vars_info, // convert the list of tuples to a map
-        });
+        Ok(FileReader {
+            data_set,
+            version,
+            input_file_path,
+            input_file,
+            vars_info, // convert the list of tuples to a map
+        })
     }
 
     /// Closes the file and releases the data set and the file version.
@@ -442,7 +441,7 @@ impl FileReader {
             let num_bytes: usize = chunk_len * data_type.size_of();
             compute_padding_size(num_bytes)
         };
-        let ref mut input = self.input_file;
+        let input = &mut self.input_file;
         input.seek(SeekFrom::Start(begin_offset))?;
         // memory allocation
         let mut data_vec = DataVector::new(data_type, var.len());
@@ -509,7 +508,7 @@ impl FileReader {
         if record_index >= num_records {
             return Err(ReadError::RecordIndexExceeded {
                 index: record_index,
-                num_records: num_records,
+                num_records,
             });
         }
 
@@ -539,7 +538,7 @@ impl FileReader {
                 self.input_file.read_f64_into::<BigEndian>(&mut data[..])
             }
         }?;
-        return Ok(data_vec);
+        Ok(data_vec)
     }
 
     impl_read_typed_record!(read_record_i8, i8, DataType::I8, DataVector::I8);
@@ -626,22 +625,22 @@ impl FileReader {
                 use DataVector::*;
                 match attr_data {
                     I8(data) => {
-                        data_set.add_var_attr_i8(&var_name, &attr_name, data.clone())?;
+                        data_set.add_var_attr_i8(&var_name, attr_name, data.clone())?;
                     }
                     U8(data) => {
-                        data_set.add_var_attr_u8(&var_name, &attr_name, data.clone())?;
+                        data_set.add_var_attr_u8(&var_name, attr_name, data.clone())?;
                     }
                     I16(data) => {
-                        data_set.add_var_attr_i16(&var_name, &attr_name, data.clone())?;
+                        data_set.add_var_attr_i16(&var_name, attr_name, data.clone())?;
                     }
                     I32(data) => {
-                        data_set.add_var_attr_i32(&var_name, &attr_name, data.clone())?;
+                        data_set.add_var_attr_i32(&var_name, attr_name, data.clone())?;
                     }
                     F32(data) => {
-                        data_set.add_var_attr_f32(&var_name, &attr_name, data.clone())?;
+                        data_set.add_var_attr_f32(&var_name, attr_name, data.clone())?;
                     }
                     F64(data) => {
-                        data_set.add_var_attr_f64(&var_name, &attr_name, data.clone())?;
+                        data_set.add_var_attr_f64(&var_name, attr_name, data.clone())?;
                     }
                 }
             }
@@ -677,11 +676,11 @@ impl FileReader {
                         return Err(ReadError::ComputationNumberOfRecords);
                     }
                 }
-                match &dim.size {
-                    DimensionSize::Unlimited(dim_size) => {
-                        dim_size.replace(num_records);
-                    }
-                    _ => {}
+                if let DimensionSize::Unlimited(dim_size) = &dim.size {
+                    dim_size.replace(num_records);
+                }
+                if let DimensionSize::Unlimited(dim_size) = &dim.size {
+                    dim_size.replace(num_records);
                 }
             }
         }
@@ -722,9 +721,9 @@ impl FileReader {
     /// - The numbers of records if it is a valid integer.
     /// - `None` if the number of records is indeterminated
     fn parse_as_usize_optional(input: &[u8]) -> Result<(&[u8], Option<usize>), ParseHeaderError> {
-        const INDETERMINATE_VALUE: u32 = std::u32::MAX;
+        const INDETERMINATE_VALUE: u32 = u32::MAX;
         let (input, value): (&[u8], u32) = verify(be_u32, |number: &u32| {
-            *number <= (std::i32::MAX as u32) || *number == INDETERMINATE_VALUE
+            *number <= (i32::MAX as u32) || *number == INDETERMINATE_VALUE
         })(input)
         .map_err(|err: NomError| {
             ParseHeaderError::new(err, ParseHeaderErrorKind::NonNegativeI32)
@@ -812,7 +811,7 @@ impl FileReader {
         }
         let (input, dim_tag): (&[u8], &[u8]) = alt((tag(ABSENT_TAG), tag(DIMENSION_TAG)))(input)
             .map_err(|err: NomError| ParseHeaderError::new(err, ParseHeaderErrorKind::DimTag))?;
-        if dim_tag == &ABSENT_TAG {
+        if dim_tag == ABSENT_TAG {
             return Ok((input, vec![]));
         }
         let (mut input, num_of_dims): (&[u8], usize) = FileReader::parse_as_usize(input)?;
@@ -842,7 +841,7 @@ impl FileReader {
             .map_err(|err: NomError| {
             ParseHeaderError::new(err, ParseHeaderErrorKind::AttrTag)
         })?;
-        if attr_tag == &ABSENT_TAG {
+        if attr_tag == ABSENT_TAG {
             return Ok((input, vec![]));
         }
         let (mut input, num_of_attrs): (&[u8], usize) = FileReader::parse_as_usize(input)?;
@@ -907,17 +906,17 @@ impl FileReader {
             let (input, begin_offset): (&[u8], Offset) = parse_offset(input, version)?;
             let var_def = VariableParsedMetadata {
                 name: var_name,
-                dim_ids: dim_ids,
-                attrs_list: attrs_list,
-                data_type: data_type,
+                dim_ids,
+                attrs_list,
+                data_type,
                 _chunk_size: chunk_size,
-                begin_offset: begin_offset,
+                begin_offset,
             };
-            return Ok((input, var_def));
+            Ok((input, var_def))
         }
         let (input, var_tag): (&[u8], &[u8]) = alt((tag(ABSENT_TAG), tag(VARIABLE_TAG)))(input)
             .map_err(|err: NomError| ParseHeaderError::new(err, ParseHeaderErrorKind::VarTag))?;
-        if var_tag == &ABSENT_TAG {
+        if var_tag == ABSENT_TAG {
             return Ok((input, vec![]));
         }
         let (mut input, num_of_vars): (&[u8], usize) = FileReader::parse_as_usize(input)?;

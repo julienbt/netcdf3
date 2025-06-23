@@ -149,7 +149,7 @@ macro_rules! impl_write_typed_record {
             if record_index >= num_records {
                 return Err(WriteError::RecordIndexExceeded {
                     index: record_index,
-                    num_records: num_records,
+                    num_records,
                 });
             }
             // Check the length of the record
@@ -341,7 +341,7 @@ impl<'a> FileWriter<'a> {
             .open(output_file_path.clone())?;
         Ok(FileWriter {
             output_file: Box::new(output_file),
-            output_file_path: output_file_path,
+            output_file_path,
             header_def: None,
             written_records: vec![],
         })
@@ -367,7 +367,7 @@ impl<'a> FileWriter<'a> {
             .open(output_file_path.clone())?;
         Ok(FileWriter {
             output_file: Box::new(output_file),
-            output_file_path: output_file_path,
+            output_file_path,
             header_def: None,
             written_records: vec![],
         })
@@ -375,7 +375,7 @@ impl<'a> FileWriter<'a> {
 
     /// Path of the output file.
     pub fn file_path(&self) -> &Path {
-        return &self.output_file_path;
+        &self.output_file_path
     }
 
     /// Set the NetCDF-3 definition.
@@ -439,28 +439,25 @@ impl<'a> FileWriter<'a> {
     }
 
     pub fn header_is_defined(&self) -> bool {
-        return self.header_def.is_some();
+        self.header_def.is_some()
     }
 
     pub fn data_set(&self) -> Option<&'a DataSet> {
-        return self
-            .header_def
+        self.header_def
             .as_ref()
-            .map(|header_def| header_def.data_set);
+            .map(|header_def| header_def.data_set)
     }
 
     pub fn version(&self) -> Option<Version> {
-        return self
-            .header_def
+        self.header_def
             .as_ref()
-            .map(|header_def| header_def.version.clone());
+            .map(|header_def| header_def.version.clone())
     }
 
     pub fn header_min_size(&self) -> Option<usize> {
-        return self
-            .header_def
+        self.header_def
             .as_ref()
-            .map(|header_def| header_def.header_min_size);
+            .map(|header_def| header_def.header_min_size)
     }
 
     /// Fills the unwritten data, and closes the NetCDF-3 file.
@@ -488,7 +485,7 @@ impl<'a> FileWriter<'a> {
                 let not_written_record: Vec<usize> = match written_records {
                     None => all_records.clone().into_iter().collect(),
                     Some(written_records) => {
-                        all_records.difference(&written_records).cloned().collect()
+                        all_records.difference(written_records).cloned().collect()
                     }
                 };
                 not_written_records.push((var, not_written_record));
@@ -629,10 +626,9 @@ impl<'a> FileWriter<'a> {
         var: &'a Variable,
         records: &[usize],
     ) -> Result<(), WriteError> {
-        let mut records_set: BTreeSet<usize> =
-            records.iter().map(|index: &usize| index.clone()).collect();
+        let mut records_set: BTreeSet<usize> = records.iter().cloned().collect();
         // Get already written records for the variable
-        let ref mut written_records: Option<&mut BTreeSet<usize>> = self
+        let written_records: &mut Option<&mut BTreeSet<usize>> = &mut self
             .written_records
             .iter_mut()
             .find(|(var_2, _written_records): &&mut (&'a Variable, BTreeSet<usize>)| var == *var_2)
@@ -665,10 +661,10 @@ impl<'a> FileWriter<'a> {
             None => 0, // No unlimited-size dim is defined
             Some(unlim_dim) => {
                 let num_records: usize = unlim_dim.size();
-                if num_records <= (std::i32::MAX as usize) {
+                if num_records <= (i32::MAX as usize) {
                     num_records as u32
                 } else {
-                    std::u32::MAX // indeterminate numbe of records records
+                    u32::MAX // indeterminate numbe of records records
                 }
             }
         };
@@ -841,8 +837,8 @@ impl<'a> FileWriter<'a> {
             // Write the `var_size` the number of bytes used per chunk (including the zero padding bytes)
             bytes = {
                 let mut chunk_size: usize = var_metadata.chunk_size;
-                if chunk_size > (std::i32::MAX as usize) {
-                    chunk_size = std::u32::MAX as usize;
+                if chunk_size > (i32::MAX as usize) {
+                    chunk_size = u32::MAX as usize;
                 }
                 (chunk_size as u32).to_be_bytes()
             };
@@ -900,11 +896,11 @@ impl<'a> HeaderDefinition<'a> {
         data_set: &'a DataSet,
         version: Version,
         header_min_size: usize,
-    ) -> Result<HeaderDefinition, WriteError> {
+    ) -> Result<HeaderDefinition<'a>, WriteError> {
         Ok(HeaderDefinition {
-            data_set: data_set,
+            data_set,
             version: version.clone(),
-            header_min_size: header_min_size,
+            header_min_size,
             data_set_metadata: ComputedDataSetMetadata::new(data_set, version, header_min_size)?,
         })
     }
@@ -952,7 +948,7 @@ impl<'a> ComputedDataSetMetadata<'a> {
         data_set: &'a DataSet,
         version: Version,
         header_min_size: usize,
-    ) -> Result<ComputedDataSetMetadata, WriteError> {
+    ) -> Result<ComputedDataSetMetadata<'a>, WriteError> {
         // Create a partition of variables to distinguish :
         // 1. Fist the *fixed-size* variables.
         // 2. Then the *record* variables.
@@ -985,7 +981,7 @@ impl<'a> ComputedDataSetMetadata<'a> {
                     var,
                     ComputedVariableMetadata {
                         dim_ids: data_set.get_var_dim_ids(&var.name).unwrap(),
-                        chunk_size: chunk_size,
+                        chunk_size,
                         begin_offset: match &version {
                             Version::Classic => {
                                 let offset: i32 = i32::try_from(begin_offset)
@@ -1013,9 +1009,9 @@ impl<'a> ComputedDataSetMetadata<'a> {
 
         // Returns the meta data only
         Ok(ComputedDataSetMetadata {
-            header_required_size: header_required_size,
+            header_required_size,
             header_zero_padding_size: header_size - header_required_size,
-            vars_metadata: vars_metadata,
+            vars_metadata,
         })
     }
 
@@ -1026,12 +1022,12 @@ impl<'a> ComputedDataSetMetadata<'a> {
             // the number bytes for the name
             num_bytes += std::mem::size_of::<i32>();
             // the bytes of the name
-            let num_bytes_name = name.as_bytes().len();
+            let num_bytes_name = name.len();
             num_bytes += num_bytes_name;
             // the bytes of the zero-padding
             num_bytes += compute_padding_size(num_bytes_name);
 
-            return num_bytes;
+            num_bytes
         }
         fn compute_attrs_list_size(attrs_list: &[Attribute]) -> usize {
             let mut num_bytes: usize = 0;
@@ -1057,7 +1053,7 @@ impl<'a> ComputedDataSetMetadata<'a> {
                     num_bytes += compute_padding_size(num_useful_bytes);
                 }
             }
-            return num_bytes;
+            num_bytes
         }
         let mut num_bytes = 0;
         // the magic word `"CDF"`
@@ -1111,6 +1107,6 @@ impl<'a> ComputedDataSetMetadata<'a> {
                 }
             }
         }
-        return num_bytes;
+        num_bytes
     }
 }
