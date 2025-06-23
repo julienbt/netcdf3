@@ -31,6 +31,23 @@ fn test_get_len() {
 }
 
 #[test]
+fn test_is_empty() {
+    assert!(DataVector::I8(vec![]).is_empty());
+    assert!(DataVector::U8(vec![]).is_empty());
+    assert!(DataVector::I16(vec![]).is_empty());
+    assert!(DataVector::I32(vec![]).is_empty());
+    assert!(DataVector::F32(vec![]).is_empty());
+    assert!(DataVector::F64(vec![]).is_empty());
+
+    assert!(!DataVector::I8(vec![1, 2, 3]).is_empty());
+    assert!(!DataVector::U8(vec![1, 2, 3]).is_empty());
+    assert!(!DataVector::I16(vec![1, 2, 3]).is_empty());
+    assert!(!DataVector::I32(vec![1, 2, 3]).is_empty());
+    assert!(!DataVector::F32(vec![1.0, 2.0, 3.0]).is_empty());
+    assert!(!DataVector::F64(vec![1.0, 2.0, 3.0]).is_empty());
+}
+
+#[test]
 fn test_get_i8() {
     assert_eq!(Some(&[1, 2, 3][..]), DataVector::I8(vec![1, 2, 3]).get_i8());
     assert_eq!(None, DataVector::U8(vec![1, 2, 3]).get_i8());

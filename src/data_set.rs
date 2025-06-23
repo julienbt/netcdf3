@@ -54,6 +54,7 @@ pub const NC_FILL_I32: i32 = -2147483647;
 /// // Written bytes in the NetCDF-3 files
 /// assert_eq!([0x7c, 0xf0, 0x00, 0x00], NC_FILL_F32.to_be_bytes());
 /// ```
+#[allow(clippy::excessive_precision)]
 pub const NC_FILL_F32: f32 = 9.9692099683868690e+36;
 /// Default fill value for the `f64` elements (same value as `NC_FILL_DOUBLE` defined in the header file [netcdf.h](https://www.unidata.ucar.edu/software/netcdf/docs/netcdf_8h.html))
 ///
@@ -62,6 +63,7 @@ pub const NC_FILL_F32: f32 = 9.9692099683868690e+36;
 /// // Written bytes in the NetCDF-3 files
 /// assert_eq!([0x47, 0x9e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], NC_FILL_F64.to_be_bytes());
 /// ```
+#[allow(clippy::excessive_precision)]
 pub const NC_FILL_F64: f64 = 9.9692099683868690e+36;
 
 /// Maximum length of the *fixed-size* dimensions
@@ -259,6 +261,12 @@ pub struct DataSet {
     pub(crate) dims: Vec<Rc<Dimension>>,
     pub(crate) attrs: Vec<Attribute>,
     pub(crate) vars: Vec<Variable>,
+}
+
+impl Default for DataSet {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl DataSet {
@@ -960,6 +968,7 @@ impl DataSet {
         var.remove_attr(attr_name)
     }
 
+    #[allow(clippy::type_complexity)]
     fn find_var_attr_from_name(
         &self,
         var_name: &str,

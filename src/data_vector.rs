@@ -91,6 +91,18 @@ impl DataVector {
         }
     }
 
+    /// Returns whether the vector is empty.
+    pub fn is_empty(&self) -> bool {
+        match self {
+            DataVector::I8(data) => data.is_empty(),
+            DataVector::U8(data) => data.is_empty(),
+            DataVector::I16(data) => data.is_empty(),
+            DataVector::I32(data) => data.is_empty(),
+            DataVector::F32(data) => data.is_empty(),
+            DataVector::F64(data) => data.is_empty(),
+        }
+    }
+
     /// Returns a slice to the internal `Vec<i8>`.
     ///
     /// # Example

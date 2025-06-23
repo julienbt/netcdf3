@@ -185,6 +185,11 @@ impl Variable {
         self.num_chunks() * self.chunk_len()
     }
 
+    /// Returns whether there are no elements.
+    pub fn is_empty(&self) -> bool {
+        self.num_chunks() == 0 || self.chunk_len() == 0
+    }
+
     pub fn use_dim(&self, dim_name: &str) -> bool {
         self.dims.iter().any(|dim| *dim.name.borrow() == dim_name)
     }

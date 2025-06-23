@@ -320,6 +320,11 @@ impl Attribute {
         self.data.len()
     }
 
+    /// Returns whether the attribute is empty.
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
+    }
+
     /// Returns a reference of the `i8` data or `None` of the attribute has not `i8` data.
     ///
     /// # Example

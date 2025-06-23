@@ -952,12 +952,15 @@ impl<'a> ComputedDataSetMetadata<'a> {
         // Create a partition of variables to distinguish :
         // 1. Fist the *fixed-size* variables.
         // 2. Then the *record* variables.
-        let (record_vars, non_record_vars): (Vec<(usize, &Variable)>, Vec<(usize, &Variable)>) =
-            data_set
-                .vars
-                .iter()
-                .enumerate() // keep the original positions of the variables in the header
-                .partition(|(_var_pos, var): &(usize, &Variable)| var.is_record_var());
+        #[allow(clippy::type_complexity)]
+        let (record_vars, non_record_vars): (
+            Vec<(usize, &Variable)>,
+            Vec<(usize, &Variable)>,
+        ) = data_set
+            .vars
+            .iter()
+            .enumerate() // keep the original positions of the variables in the header
+            .partition(|(_var_pos, var): &(usize, &Variable)| var.is_record_var());
         let partitioned_vars: Vec<(usize, &Variable)> =
             non_record_vars.into_iter().chain(record_vars).collect();
 

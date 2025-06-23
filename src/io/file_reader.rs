@@ -803,6 +803,7 @@ impl FileReader {
     }
 
     // Parses the list of the dimensions from the header.
+    #[allow(clippy::type_complexity)]
     fn parse_dims_list(input: &[u8]) -> Result<(&[u8], Vec<(String, usize)>), ParseHeaderError> {
         fn parse_dim(input: &[u8]) -> Result<(&[u8], (String, usize)), ParseHeaderError> {
             let (input, dim_name): (&[u8], String) = FileReader::parse_name_string(input)?;
@@ -826,6 +827,7 @@ impl FileReader {
     }
 
     // Parses a list of attributes (global of from any variables) from the header.
+    #[allow(clippy::type_complexity)]
     fn parse_attrs_list(
         input: &[u8],
     ) -> Result<(&[u8], Vec<(String, DataVector)>), ParseHeaderError> {

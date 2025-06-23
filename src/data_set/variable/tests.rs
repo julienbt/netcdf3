@@ -103,3 +103,59 @@ fn test_var_len_per_chunk() {
     assert_eq!(false, var_2.is_record_var());
     assert_eq!(FIXED_DIM_SIZE_1 * FIXED_DIM_SIZE_2, var_2.chunk_len());
 }
+
+#[test]
+fn test_var_is_empty() {
+    const UNLIM_DIM_NAME_0: &str = "unlim_dim_0";
+    const UNLIM_DIM_SIZE_0: usize = 0;
+
+    const UNLIM_DIM_NAME_1: &str = "unlim_dim_1";
+    const UNLIM_DIM_SIZE_1: usize = 1;
+
+    const VAR_NAME_0: &str = "var_0";
+    const VAR_NAME_1: &str = "var_1";
+
+    let data_set_0: DataSet = {
+        let mut data_set: DataSet = DataSet::new();
+        data_set
+            .set_unlimited_dim(UNLIM_DIM_NAME_0, UNLIM_DIM_SIZE_0)
+            .unwrap();
+
+        data_set
+            .add_var_i8(VAR_NAME_0, &[UNLIM_DIM_NAME_0])
+            .unwrap();
+        data_set
+    };
+
+    let data_set_1: DataSet = {
+        let mut data_set: DataSet = DataSet::new();
+        data_set
+            .set_unlimited_dim(UNLIM_DIM_NAME_1, UNLIM_DIM_SIZE_1)
+            .unwrap();
+
+        data_set
+            .add_var_i8(VAR_NAME_1, &[UNLIM_DIM_NAME_1])
+            .unwrap();
+        data_set
+    };
+
+    assert_eq!(true, data_set_0.has_var(VAR_NAME_0));
+    assert_eq!(true, data_set_1.has_var(VAR_NAME_1));
+
+    let var_0: &Variable = data_set_0.get_var(VAR_NAME_0).unwrap();
+    let var_1: &Variable = data_set_1.get_var(VAR_NAME_1).unwrap();
+
+    assert_eq!(0, var_0.len());
+    assert!(var_0.is_empty());
+    assert_eq!(1, var_1.len());
+    assert!(!var_1.is_empty());
+}
+
+#[test]
+fn test_default() {
+    let data_set_new: DataSet = DataSet::new();
+    let data_set_default: DataSet = DataSet::default();
+
+    assert_eq!(0, data_set_new.num_dims());
+    assert_eq!(0, data_set_default.num_dims());
+}
