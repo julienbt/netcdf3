@@ -1,5 +1,3 @@
-
-
 mod file_reader;
 mod file_writer;
 mod tests_io;
@@ -8,15 +6,13 @@ pub use file_reader::FileReader;
 pub use file_writer::FileWriter;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub (crate) enum Offset {
+pub(crate) enum Offset {
     I32(i32),
     I64(i64),
 }
 
 impl std::convert::From<Offset> for i64 {
-
-    fn from(offset: Offset) -> Self
-    {
+    fn from(offset: Offset) -> Self {
         match offset {
             Offset::I32(value) => value as i64,
             Offset::I64(value) => value,

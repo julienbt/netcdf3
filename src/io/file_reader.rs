@@ -1,56 +1,33 @@
-use std::fmt::Debug;
+use std::collections::HashMap;
 use std::convert::TryFrom;
-use std::rc::Rc;
+use std::fmt::Debug;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
-use std::collections::HashMap;
+use std::rc::Rc;
 
-use byteorder::{ReadBytesExt, BigEndian};
+use byteorder::{BigEndian, ReadBytesExt};
 
 use nom::{
-    combinator::{
-        verify,
-        map_res,
-    },
-    bytes::streaming::{
-        tag,
-        take,
-    },
-    number::streaming::{
-        be_i8,
-        be_u8,
-        be_i16,
-        be_i32,
-        be_f32,
-        be_f64,
-        be_i64,
-        be_u32,
-    },
     branch::alt,
+    bytes::streaming::{tag, take},
+    combinator::{map_res, verify},
     multi::many_m_n,
+    number::streaming::{be_f32, be_f64, be_i16, be_i32, be_i64, be_i8, be_u32, be_u8},
 };
-
 
 use crate::{
     data_set::DimensionSize,
-    DataSet,
-    DataType,
-    Dimension,
-    DataVector,
-    Variable,
-    Version,
+    error::parse_header_error::{NomError, ParseHeaderError, ParseHeaderErrorKind},
     error::ReadError,
-    error::parse_header_error::{ParseHeaderError, ParseHeaderErrorKind, NomError},
-    io::{compute_padding_size, Offset, ABSENT_TAG, DIMENSION_TAG, VARIABLE_TAG, ATTRIBUTE_TAG},
+    io::{compute_padding_size, Offset, ABSENT_TAG, ATTRIBUTE_TAG, DIMENSION_TAG, VARIABLE_TAG},
+    DataSet, DataType, DataVector, Dimension, Variable, Version,
 };
 
 pub trait SeekRead: Seek + Read {}
 impl<T: Seek + Read> SeekRead for T {}
 
-impl Debug for dyn SeekRead
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error>
-    {
+impl Debug for dyn SeekRead {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{:p}", self)
     }
 }
@@ -120,7 +97,7 @@ impl Debug for dyn SeekRead
 /// // Get the NetCDf-3 version
 /// // ------------------------
 /// assert_eq!(Version::Classic,                    file_reader.version());
-/// 
+///
 //// // Get the global attributes
 /// // --------------------------
 /// assert_eq!(2,                                   data_set.num_global_attrs());
@@ -175,7 +152,7 @@ impl Debug for dyn SeekRead
 /// let data_set: &DataSet = file_reader.data_set();
 /// assert_eq!(9,                                   variables.len());
 ///
-/// 
+///
 /// assert_eq!(true,                                variables.contains_key(LATITUDE_VAR_NAME));
 /// assert_eq!(DataType::F32,                       variables[LATITUDE_VAR_NAME].data_type());
 /// assert_eq!(Some(&LATITUDE_VAR_DATA[..]),        variables[LATITUDE_VAR_NAME].get_f32());
@@ -183,27 +160,27 @@ impl Debug for dyn SeekRead
 /// assert_eq!(true,                                variables.contains_key(LONGITUDE_VAR_NAME));
 /// assert_eq!(DataType::F32,                       variables[LONGITUDE_VAR_NAME].data_type());
 /// assert_eq!(Some(&LONGITUDE_VAR_DATA[..]),       variables[LONGITUDE_VAR_NAME].get_f32());
-/// 
+///
 /// assert_eq!(true,                                variables.contains_key(TIME_VAR_NAME));
 /// assert_eq!(DataType::F32,                       variables[TIME_VAR_NAME].data_type());
 /// assert_eq!(Some(&TIME_VAR_DATA[..]),            variables[TIME_VAR_NAME].get_f32());
-/// 
+///
 /// assert_eq!(true,                                variables.contains_key(TEMP_I8_VAR_NAME));
 /// assert_eq!(DataType::I8,                        variables[TEMP_I8_VAR_NAME].data_type());
 /// assert_eq!(Some(&TEMP_I8_VAR_DATA[..]),         variables[TEMP_I8_VAR_NAME].get_i8());
-/// 
+///
 /// assert_eq!(true,                                variables.contains_key(TEMP_U8_VAR_NAME));
 /// assert_eq!(DataType::U8,                        variables[TEMP_U8_VAR_NAME].data_type());
 /// assert_eq!(Some(&TEMP_U8_VAR_DATA[..]),         variables[TEMP_U8_VAR_NAME].get_u8());
-/// 
+///
 /// assert_eq!(true,                                variables.contains_key(TEMP_I16_VAR_NAME));
 /// assert_eq!(DataType::I16,                       variables[TEMP_I16_VAR_NAME].data_type());
 /// assert_eq!(Some(&TEMP_I16_VAR_DATA[..]),        variables[TEMP_I16_VAR_NAME].get_i16());
-/// 
+///
 /// assert_eq!(true,                                variables.contains_key(TEMP_I32_VAR_NAME));
 /// assert_eq!(DataType::I32,                       variables[TEMP_I32_VAR_NAME].data_type());
 /// assert_eq!(Some(&TEMP_I32_VAR_DATA[..]),        variables[TEMP_I32_VAR_NAME].get_i32());
-/// 
+///
 /// assert_eq!(true,                                variables.contains_key(TEMP_F32_VAR_NAME));
 /// assert_eq!(DataType::F32,                       variables[TEMP_F32_VAR_NAME].data_type());
 /// assert_eq!(Some(&TEMP_F32_VAR_DATA[..]),        variables[TEMP_F32_VAR_NAME].get_f32());
@@ -220,23 +197,28 @@ pub struct FileReader {
     version: Version,
     input_file_path: PathBuf,
     input_file: Box<dyn SeekRead>,
-    vars_info: Vec<VariableParsedMetadata>
+    vars_info: Vec<VariableParsedMetadata>,
 }
 
 macro_rules! impl_read_typed_var {
     ($func_name:ident, $prim_type:ty, $data_type:path, $data_vector:path) => {
         /// Reads the typed variable and returns its values into a typed `Vec`.
         pub fn $func_name(&mut self, var_name: &str) -> Result<Vec<$prim_type>, ReadError> {
-            let (_var_index, var): (usize, &Variable) = self.data_set.find_var_from_name(var_name).map_err(|_err|{
-                ReadError::VariableNotDefined(String::from(var_name))
-            })?;
+            let (_var_index, var): (usize, &Variable) = self
+                .data_set
+                .find_var_from_name(var_name)
+                .map_err(|_err| ReadError::VariableNotDefined(String::from(var_name)))?;
             if var.data_type != $data_type {
-                return Err(ReadError::VariableMismatchDataType{var_name: String::from(var_name), req: var.data_type.clone(), get: $data_type});
+                return Err(ReadError::VariableMismatchDataType {
+                    var_name: String::from(var_name),
+                    req: var.data_type.clone(),
+                    get: $data_type,
+                });
             }
             let data_vec: DataVector = self.read_var(var_name)?;
             match data_vec {
                 $data_vector(data) => return Ok(data),
-                _ => return Err(ReadError::Unexpected),  // previously checked
+                _ => return Err(ReadError::Unexpected), // previously checked
             }
         }
     };
@@ -245,25 +227,32 @@ macro_rules! impl_read_typed_var {
 macro_rules! impl_read_typed_record {
     ($func_name:ident, $prim_type:ty, $data_type:path, $data_vector:path) => {
         /// Reads the typed records and returns its values into a typed`Vec`.
-        pub fn $func_name(&mut self, var_name: &str, record_index: usize) -> Result<Vec<$prim_type>, ReadError>
-        {
-            let (_var_index, var): (usize, &Variable) = self.data_set.find_var_from_name(var_name).map_err(|_err|{
-                ReadError::VariableNotDefined(String::from(var_name))
-            })?;
+        pub fn $func_name(
+            &mut self,
+            var_name: &str,
+            record_index: usize,
+        ) -> Result<Vec<$prim_type>, ReadError> {
+            let (_var_index, var): (usize, &Variable) = self
+                .data_set
+                .find_var_from_name(var_name)
+                .map_err(|_err| ReadError::VariableNotDefined(String::from(var_name)))?;
             if var.data_type != $data_type {
-                return Err(ReadError::VariableMismatchDataType{var_name: String::from(var_name), req: var.data_type.clone(), get: $data_type});
+                return Err(ReadError::VariableMismatchDataType {
+                    var_name: String::from(var_name),
+                    req: var.data_type.clone(),
+                    get: $data_type,
+                });
             }
             let data_vec: DataVector = self.read_record(var_name, record_index)?;
             match data_vec {
                 $data_vector(data) => return Ok(data),
-                _ => return Err(ReadError::Unexpected),  // previously checked
+                _ => return Err(ReadError::Unexpected), // previously checked
             };
         }
     };
 }
 
 impl FileReader {
-
     /// Returns the data set managed by the reader.
     pub fn data_set(&self) -> &DataSet {
         return &self.data_set;
@@ -274,13 +263,14 @@ impl FileReader {
     }
 
     /// Returns the data set managed by the reader.
-    pub fn file_path(&self) -> &std::path::Path
-    {
+    pub fn file_path(&self) -> &std::path::Path {
         return &self.input_file_path;
     }
 
-    pub fn open_seek_read(input_file_name: &str, mut input_file: Box<dyn SeekRead>) -> Result<Self, ReadError>
-    {
+    pub fn open_seek_read(
+        input_file_name: &str,
+        mut input_file: Box<dyn SeekRead>,
+    ) -> Result<Self, ReadError> {
         let input_file_path: PathBuf = PathBuf::from(input_file_name);
 
         // determine length as in use https://doc.rust-lang.org/stable/src/std/io/mod.rs.html#1871-1882
@@ -294,24 +284,26 @@ impl FileReader {
     }
 
     /// Opens the file and parses the header of the NetCDF-3.
-    pub fn open<P: AsRef<Path>>(input_file_path: P) -> Result<Self, ReadError>
-    {
+    pub fn open<P: AsRef<Path>>(input_file_path: P) -> Result<Self, ReadError> {
         let input_file_path: PathBuf = {
             let mut path = PathBuf::new();
             path.push(input_file_path);
             path
         };
         let input_file: Box<dyn SeekRead> = Box::new(std::fs::File::open(input_file_path.clone())?);
-        let file_size = std::fs::metadata(&input_file_path)?.len(); 
+        let file_size = std::fs::metadata(&input_file_path)?.len();
 
         Self::read_header(input_file_path, input_file, file_size)
     }
-    
+
     /// Opens the file and parses the header of the NetCDF-3.
-    fn read_header(input_file_path: PathBuf, mut input_file: Box<dyn SeekRead>, file_size: u64) -> Result<Self, ReadError>
-    {
+    fn read_header(
+        input_file_path: PathBuf,
+        mut input_file: Box<dyn SeekRead>,
+        file_size: u64,
+    ) -> Result<Self, ReadError> {
         const BUFFER_SIZE: usize = 1024;
-        
+
         // Parse the header
         let (data_set, version, vars_info): (DataSet, Version, Vec<VariableParsedMetadata>) = {
             let mut buffer: Vec<u8> = vec![];
@@ -319,13 +311,17 @@ impl FileReader {
             loop {
                 // Load bytes
                 let old_buf_start: usize = buffer.len();
-                let new_buf_size: usize = std::cmp::min((buffer.len() + BUFFER_SIZE) as u64, file_size) as usize;
+                let new_buf_size: usize =
+                    std::cmp::min((buffer.len() + BUFFER_SIZE) as u64, file_size) as usize;
                 let start: &usize = &old_buf_start;
                 let end: &usize = &new_buf_size;
                 buffer.resize(new_buf_size, 0_u8);
                 let _num_of_bytes = input_file.read(&mut buffer[*start..*end])?;
 
-                let parsing_result: Result<(DataSet, Version, Vec<VariableParsedMetadata>), ReadError>;
+                let parsing_result: Result<
+                    (DataSet, Version, Vec<VariableParsedMetadata>),
+                    ReadError,
+                >;
                 // TODO: do not cast file_size to usize, instead make parse_header() work with u64
                 parsing_result = FileReader::parse_header(&buffer, file_size as usize);
                 match parsing_result {
@@ -334,34 +330,32 @@ impl FileReader {
                         version = version_2;
                         vars_info = vars_info_2;
                         break;
-                    },
+                    }
                     Err(read_err) => {
                         if read_err.header_is_incomplete() {
                             let buf_size: u64 = buffer.len() as u64;
                             if buf_size < file_size {
                                 // nothing to do
-                            }
-                            else {
+                            } else {
                                 return Err(read_err);
                             }
-                        }
-                        else {
+                        } else {
                             return Err(read_err);
                         }
-                    },
+                    }
                 }
             }
             (data_set, version, vars_info)
         };
 
         // Return the result
-        return Ok(FileReader{
+        return Ok(FileReader {
             data_set: data_set,
             version: version,
             input_file_path: input_file_path,
             input_file: input_file,
-            vars_info: vars_info,  // convert the list of tuples to a map
-        })
+            vars_info: vars_info, // convert the list of tuples to a map
+        });
     }
 
     /// Closes the file and releases the data set and the file version.
@@ -372,14 +366,15 @@ impl FileReader {
     /// Allows to read all variable data easily.
     ///
     /// Also see an example [here](struct.FileReader.html#example).
-    pub fn read_all_vars(&mut self) -> Result<HashMap<String, DataVector>, ReadError>
-    {
+    pub fn read_all_vars(&mut self) -> Result<HashMap<String, DataVector>, ReadError> {
         let var_names: Vec<String> = self.data_set.get_var_names();
-        var_names.into_iter()
+        var_names
+            .into_iter()
             .map(|var_name: String| {
                 let var_data: DataVector = self.read_var(&var_name)?;
                 Ok((var_name, var_data))
-            }).collect()
+            })
+            .collect()
     }
 
     /// Reads the typed variable and returns its values into `Vec`.
@@ -414,7 +409,7 @@ impl FileReader {
     /// {
     ///     let latitudes: DataVector = file_reader.read_var(LATITUDE_VAR_NAME).unwrap();
     ///     assert_eq!(DataType::F32,                           latitudes.data_type());
-    /// 
+    ///
     ///     assert_eq!(None,                                    latitudes.get_i8());
     ///     assert_eq!(None,                                    latitudes.get_u8());
     ///     assert_eq!(None,                                    latitudes.get_i16());
@@ -422,22 +417,23 @@ impl FileReader {
     ///     assert_eq!(Some(&LATITUDE_VAR_DATA[..]),            latitudes.get_f32());
     ///     assert_eq!(None,                                    latitudes.get_f64());
     /// }
-    /// 
+    ///
     /// // using the method `FileReader::read_var_f32`
     /// {
     ///     let latitudes: Vec<f32> = file_reader.read_var_f32(LATITUDE_VAR_NAME).unwrap();
     ///     assert_eq!(&LATITUDE_VAR_DATA[..],                  &latitudes[..]);
     /// }
     /// ```
-    pub fn read_var(&mut self, var_name: &str) -> Result<DataVector, ReadError>
-    {
-        let (_, var): (usize, &Variable) = self.data_set.find_var_from_name(var_name).map_err(|_err|{
-            ReadError::VariableNotDefined(String::from(var_name))
-        })?;
+    pub fn read_var(&mut self, var_name: &str) -> Result<DataVector, ReadError> {
+        let (_, var): (usize, &Variable) = self
+            .data_set
+            .find_var_from_name(var_name)
+            .map_err(|_err| ReadError::VariableNotDefined(String::from(var_name)))?;
         let record_size: usize = self.data_set.record_size().unwrap_or(0);
         let num_records: usize = self.data_set.num_records().unwrap_or(0);
         let begin_offset: u64 = {
-            let var_info: &VariableParsedMetadata = self.find_var_info(var_name).ok_or(ReadError::Unexpected)?;
+            let var_info: &VariableParsedMetadata =
+                self.find_var_info(var_name).ok_or(ReadError::Unexpected)?;
             i64::from(var_info.begin_offset.clone()) as u64
         };
         let data_type: DataType = var.data_type();
@@ -452,34 +448,39 @@ impl FileReader {
         let mut data_vec = DataVector::new(data_type, var.len());
         if !var.is_record_var() {
             match data_vec {
-                DataVector::I8(ref mut data) => { input.read_i8_into(&mut data[..]) },
-                DataVector::U8(ref mut data) => { input.read_exact(&mut data[..]) },
-                DataVector::I16(ref mut data) => { input.read_i16_into::<BigEndian>(&mut data[..]) },
-                DataVector::I32(ref mut data) => { input.read_i32_into::<BigEndian>(&mut data[..]) },
-                DataVector::F32(ref mut data) => { input.read_f32_into::<BigEndian>(&mut data[..]) },
-                DataVector::F64(ref mut data) => { input.read_f64_into::<BigEndian>(&mut data[..]) },
+                DataVector::I8(ref mut data) => input.read_i8_into(&mut data[..]),
+                DataVector::U8(ref mut data) => input.read_exact(&mut data[..]),
+                DataVector::I16(ref mut data) => input.read_i16_into::<BigEndian>(&mut data[..]),
+                DataVector::I32(ref mut data) => input.read_i32_into::<BigEndian>(&mut data[..]),
+                DataVector::F32(ref mut data) => input.read_f32_into::<BigEndian>(&mut data[..]),
+                DataVector::F64(ref mut data) => input.read_f64_into::<BigEndian>(&mut data[..]),
             }?;
-            if padding_size > 0
-            {
+            if padding_size > 0 {
                 input.seek(SeekFrom::Current(padding_size as i64))?;
             }
-        }
-        else {
+        } else {
             let chunk_size: usize = var.chunk_size();
 
             let offset_size: i64 = (record_size + padding_size - chunk_size) as i64;
-            for i in 0_usize..num_records
-            {
+            for i in 0_usize..num_records {
                 // reader.seek(SeekFrom::)
                 let start: usize = i * chunk_len;
                 let end: usize = (i + 1) * chunk_len;
                 match data_vec {
-                    DataVector::I8(ref mut data) => { input.read_i8_into(&mut data[start..end]) },
-                    DataVector::U8(ref mut data) => { input.read_exact(&mut data[start..end]) },
-                    DataVector::I16(ref mut data) => { input.read_i16_into::<BigEndian>(&mut data[start..end]) },
-                    DataVector::I32(ref mut data) => { input.read_i32_into::<BigEndian>(&mut data[start..end]) },
-                    DataVector::F32(ref mut data) => { input.read_f32_into::<BigEndian>(&mut data[start..end]) },
-                    DataVector::F64(ref mut data) => { input.read_f64_into::<BigEndian>(&mut data[start..end]) },
+                    DataVector::I8(ref mut data) => input.read_i8_into(&mut data[start..end]),
+                    DataVector::U8(ref mut data) => input.read_exact(&mut data[start..end]),
+                    DataVector::I16(ref mut data) => {
+                        input.read_i16_into::<BigEndian>(&mut data[start..end])
+                    }
+                    DataVector::I32(ref mut data) => {
+                        input.read_i32_into::<BigEndian>(&mut data[start..end])
+                    }
+                    DataVector::F32(ref mut data) => {
+                        input.read_f32_into::<BigEndian>(&mut data[start..end])
+                    }
+                    DataVector::F64(ref mut data) => {
+                        input.read_f64_into::<BigEndian>(&mut data[start..end])
+                    }
                 }?;
                 input.seek(SeekFrom::Current(offset_size))?;
             }
@@ -495,19 +496,28 @@ impl FileReader {
     impl_read_typed_var!(read_var_f64, f64, DataType::F64, DataVector::F64);
 
     /// Reads the typed records and returns its values into a typed`Vec`.
-    pub fn read_record(&mut self, var_name: &str, record_index: usize) -> Result<DataVector, ReadError>
-    {
-        let (_var_index, var): (usize, &Variable) = self.data_set.find_var_from_name(var_name).map_err(|_err|{
-            ReadError::VariableNotDefined(String::from(var_name))
-        })?;
+    pub fn read_record(
+        &mut self,
+        var_name: &str,
+        record_index: usize,
+    ) -> Result<DataVector, ReadError> {
+        let (_var_index, var): (usize, &Variable) = self
+            .data_set
+            .find_var_from_name(var_name)
+            .map_err(|_err| ReadError::VariableNotDefined(String::from(var_name)))?;
         let num_records: usize = self.data_set.num_records().unwrap_or(1); // fixed-size variables haves exaclty one record
         if record_index >= num_records {
-            return Err(ReadError::RecordIndexExceeded{index: record_index, num_records: num_records});
+            return Err(ReadError::RecordIndexExceeded {
+                index: record_index,
+                num_records: num_records,
+            });
         }
 
         // Compute the record offset from the start of the NetCDF3 file
-        let var_info: &VariableParsedMetadata = self.find_var_info(var_name).ok_or(ReadError::Unexpected)?;
-        let record_offset: u64 = (i64::from(var_info.begin_offset.clone()) as u64) + ((record_index * self.data_set.record_size().unwrap_or(0)) as u64);
+        let var_info: &VariableParsedMetadata =
+            self.find_var_info(var_name).ok_or(ReadError::Unexpected)?;
+        let record_offset: u64 = (i64::from(var_info.begin_offset.clone()) as u64)
+            + ((record_index * self.data_set.record_size().unwrap_or(0)) as u64);
         self.input_file.seek(SeekFrom::Start(record_offset))?;
 
         // Read the data
@@ -516,10 +526,18 @@ impl FileReader {
         match data_vec {
             DataVector::I8(ref mut data) => self.input_file.read_i8_into(&mut data[..]),
             DataVector::U8(ref mut data) => self.input_file.read_exact(&mut data[..]),
-            DataVector::I16(ref mut data) => self.input_file.read_i16_into::<BigEndian>(&mut data[..]),
-            DataVector::I32(ref mut data) => self.input_file.read_i32_into::<BigEndian>(&mut data[..]),
-            DataVector::F32(ref mut data) => self.input_file.read_f32_into::<BigEndian>(&mut data[..]),
-            DataVector::F64(ref mut data) => self.input_file.read_f64_into::<BigEndian>(&mut data[..]),
+            DataVector::I16(ref mut data) => {
+                self.input_file.read_i16_into::<BigEndian>(&mut data[..])
+            }
+            DataVector::I32(ref mut data) => {
+                self.input_file.read_i32_into::<BigEndian>(&mut data[..])
+            }
+            DataVector::F32(ref mut data) => {
+                self.input_file.read_f32_into::<BigEndian>(&mut data[..])
+            }
+            DataVector::F64(ref mut data) => {
+                self.input_file.read_f64_into::<BigEndian>(&mut data[..])
+            }
         }?;
         return Ok(data_vec);
     }
@@ -532,17 +550,22 @@ impl FileReader {
     impl_read_typed_record!(read_record_f64, f64, DataType::F64, DataVector::F64);
 
     /// Parses the NetCDF-3 header
-    fn parse_header(input: &[u8], total_file_size: usize) -> Result<(DataSet, Version, Vec<VariableParsedMetadata>), ReadError> {
+    fn parse_header(
+        input: &[u8],
+        total_file_size: usize,
+    ) -> Result<(DataSet, Version, Vec<VariableParsedMetadata>), ReadError> {
         // the magic word
         let (input, _): (&[u8], &[u8]) = FileReader::parse_magic_word(input)?;
         // the version number
-        let (input, version) : (&[u8], Version) = FileReader::parse_version(input)?;
+        let (input, version): (&[u8], Version) = FileReader::parse_version(input)?;
 
         // the number of records
-        let (input, num_records): (&[u8], Option<usize>) = FileReader::parse_as_usize_optional(input)?;
+        let (input, num_records): (&[u8], Option<usize>) =
+            FileReader::parse_as_usize_optional(input)?;
         let (input, dims_list): (&[u8], Vec<(String, usize)>) = FileReader::parse_dims_list(input)?;
         let (input, global_attrs_list): (&[u8], Vec<_>) = FileReader::parse_attrs_list(input)?;
-        let (_input, var_info_list): (&[u8], Vec<VariableParsedMetadata>) = FileReader::parse_vars_list(input, version.clone())?;
+        let (_input, var_info_list): (&[u8], Vec<VariableParsedMetadata>) =
+            FileReader::parse_vars_list(input, version.clone())?;
 
         // Create a new dataset
         let mut data_set = DataSet::new();
@@ -576,9 +599,7 @@ impl FileReader {
                 I32(data) => {
                     data_set.add_global_attr_i32(&attr_name, data)?;
                 }
-                F32(data) => {
-                    data_set.add_global_attr_f32(&attr_name, data)?
-                }
+                F32(data) => data_set.add_global_attr_f32(&attr_name, data)?,
                 F64(data) => {
                     data_set.add_global_attr_f64(&attr_name, data)?;
                 }
@@ -586,11 +607,15 @@ impl FileReader {
         }
 
         // Append the variables
-        let mut record_var_begin_offsets: Vec<Offset> = vec![];  // used to computed the number of records if necessaray
+        let mut record_var_begin_offsets: Vec<Offset> = vec![]; // used to computed the number of records if necessaray
         for var_info in var_info_list.iter() {
             let dim_refs: Vec<Rc<Dimension>> = data_set.get_dims_from_dim_ids(&var_info.dim_ids)?;
             // Create the variable the variable
-            let var: &Variable = data_set.add_var_using_dim_refs(&var_info.name, dim_refs, var_info.data_type.clone())?;
+            let var: &Variable = data_set.add_var_using_dim_refs(
+                &var_info.name,
+                dim_refs,
+                var_info.data_type.clone(),
+            )?;
             // Keep the `begin_offset` of the variable
             if var.is_record_var() {
                 record_var_begin_offsets.push(var_info.begin_offset.clone());
@@ -629,17 +654,25 @@ impl FileReader {
                 // Case: the unlimited dim  is defined but no record variable is defined
                 if record_var_begin_offsets.is_empty() {
                     num_records = 0;
-                }
-                else {
+                } else {
                     // Computation of the number of records
-                    let first_begin_offset: usize = record_var_begin_offsets.into_iter().map(|begin_offset: Offset| i64::from(begin_offset) as usize).min().unwrap();
+                    let first_begin_offset: usize = record_var_begin_offsets
+                        .into_iter()
+                        .map(|begin_offset: Offset| i64::from(begin_offset) as usize)
+                        .min()
+                        .unwrap();
                     let all_records_size: usize = total_file_size - first_begin_offset; // the size allocated for all record data
                     let record_size: usize = data_set.record_size().ok_or(ReadError::Unexpected)?;
-                    if record_size == 0 {  // cannot be zero
+                    if record_size == 0 {
+                        // cannot be zero
                         return Err(ReadError::Unexpected);
                     }
-                    num_records = all_records_size.checked_div_euclid(record_size).ok_or(ReadError::Unexpected)?;
-                    let num_rem_bytes: usize = all_records_size.checked_rem_euclid(record_size).ok_or(ReadError::Unexpected)?;  // the number of remaining bytes
+                    num_records = all_records_size
+                        .checked_div_euclid(record_size)
+                        .ok_or(ReadError::Unexpected)?;
+                    let num_rem_bytes: usize = all_records_size
+                        .checked_rem_euclid(record_size)
+                        .ok_or(ReadError::Unexpected)?; // the number of remaining bytes
                     if num_rem_bytes != 0 {
                         return Err(ReadError::ComputationNumberOfRecords);
                     }
@@ -647,36 +680,32 @@ impl FileReader {
                 match &dim.size {
                     DimensionSize::Unlimited(dim_size) => {
                         dim_size.replace(num_records);
-                    },
-                    _ => {},
+                    }
+                    _ => {}
                 }
             }
         }
         Ok((data_set, version, var_info_list))
     }
 
-    fn parse_magic_word(input: &[u8]) -> Result<(&[u8], &[u8]), ParseHeaderError>
-    {
-        let (input, tag_value): (&[u8], &[u8]) = tag(&b"CDF"[..])(input).map_err(|err: NomError|{
-            ParseHeaderError::new(err, ParseHeaderErrorKind::MagicWord)
-        })?;
+    fn parse_magic_word(input: &[u8]) -> Result<(&[u8], &[u8]), ParseHeaderError> {
+        let (input, tag_value): (&[u8], &[u8]) = tag(&b"CDF"[..])(input)
+            .map_err(|err: NomError| ParseHeaderError::new(err, ParseHeaderErrorKind::MagicWord))?;
         Ok((input, tag_value))
     }
 
-    fn parse_version(input: &[u8]) -> Result<(&[u8], Version), ParseHeaderError>
-    {
-        let (input, version_number): (&[u8], u8) = verify(be_u8, |ver_num: &u8|{
+    fn parse_version(input: &[u8]) -> Result<(&[u8], Version), ParseHeaderError> {
+        let (input, version_number): (&[u8], u8) = verify(be_u8, |ver_num: &u8| {
             ver_num == &(Version::Classic as u8) || ver_num == &(Version::Offset64Bit as u8)
-        })(input).map_err(|err: NomError|{
-            ParseHeaderError::new(err, ParseHeaderErrorKind::VersionNumber)
-        })?;
-        let version = Version::try_from(version_number).unwrap();  // previously checked
+        })(input)
+        .map_err(|err: NomError| ParseHeaderError::new(err, ParseHeaderErrorKind::VersionNumber))?;
+        let version = Version::try_from(version_number).unwrap(); // previously checked
         Ok((input, version))
     }
 
     /// Parses a `i32` word and checks that it is non-negative.
     fn parse_non_neg_i32(input: &[u8]) -> Result<(&[u8], i32), ParseHeaderError> {
-        verify(be_i32, |number: &i32| *number >= 0_i32)(input).map_err(|err: NomError|{
+        verify(be_i32, |number: &i32| *number >= 0_i32)(input).map_err(|err: NomError| {
             ParseHeaderError::new(err, ParseHeaderErrorKind::NonNegativeI32)
         })
     }
@@ -694,7 +723,10 @@ impl FileReader {
     /// - `None` if the number of records is indeterminated
     fn parse_as_usize_optional(input: &[u8]) -> Result<(&[u8], Option<usize>), ParseHeaderError> {
         const INDETERMINATE_VALUE: u32 = std::u32::MAX;
-        let (input, value): (&[u8], u32) = verify(be_u32, |number: &u32| *number <= (std::i32::MAX as u32) || *number == INDETERMINATE_VALUE)(input).map_err(|err: NomError|{
+        let (input, value): (&[u8], u32) = verify(be_u32, |number: &u32| {
+            *number <= (std::i32::MAX as u32) || *number == INDETERMINATE_VALUE
+        })(input)
+        .map_err(|err: NomError| {
             ParseHeaderError::new(err, ParseHeaderErrorKind::NonNegativeI32)
         })?;
         let value: Option<usize> = match value {
@@ -710,81 +742,82 @@ impl FileReader {
         Ok((input, number as u32))
     }
     /// Parses a string
-    fn parse_name_string(input: &[u8]) -> Result<(&[u8], String), ParseHeaderError>
-    {
+    fn parse_name_string(input: &[u8]) -> Result<(&[u8], String), ParseHeaderError> {
         let (input, num_of_bytes): (&[u8], usize) = FileReader::parse_as_usize(input)?;
         let (input, name): (&[u8], String) = map_res(take(num_of_bytes), |bytes: &[u8]| {
             String::from_utf8(bytes.to_vec())
-        })(input).map_err(|err: NomError|{
-            ParseHeaderError::new(err, ParseHeaderErrorKind::Utf8)
-        })?;
+        })(input)
+        .map_err(|err: NomError| ParseHeaderError::new(err, ParseHeaderErrorKind::Utf8))?;
         // Take the zero padding bytes if necessary
-        let (input, _zero_padding_bytes): (&[u8], &[u8]) = FileReader::parse_zero_padding(input, compute_padding_size(num_of_bytes))?;
+        let (input, _zero_padding_bytes): (&[u8], &[u8]) =
+            FileReader::parse_zero_padding(input, compute_padding_size(num_of_bytes))?;
         Ok((input, name))
     }
 
     // Parses a NetCDF-3 data type.
-    fn parse_data_type(input: &[u8]) -> Result<(&[u8], DataType), ParseHeaderError>
-    {
+    fn parse_data_type(input: &[u8]) -> Result<(&[u8], DataType), ParseHeaderError> {
         let start: &[u8] = input;
         let (input, data_type_number): (&[u8], u32) = FileReader::parse_as_u32(input)?;
-        let data_type: DataType = DataType::try_from(data_type_number).map_err(|_err|{
-            nom::Err::Error((&start[0..4], nom::error::ErrorKind::Verify))
-        }).map_err(|err: NomError|{
-            ParseHeaderError::new(err, ParseHeaderErrorKind::DataType)
-        })?;
+        let data_type: DataType = DataType::try_from(data_type_number)
+            .map_err(|_err| nom::Err::Error((&start[0..4], nom::error::ErrorKind::Verify)))
+            .map_err(|err: NomError| ParseHeaderError::new(err, ParseHeaderErrorKind::DataType))?;
         Ok((input, data_type))
     }
 
-    fn parse_typed_data_elements(input: &[u8], num_of_elements: usize, data_type: DataType) -> Result<(&[u8], DataVector), ParseHeaderError>
-    {
+    fn parse_typed_data_elements(
+        input: &[u8],
+        num_of_elements: usize,
+        data_type: DataType,
+    ) -> Result<(&[u8], DataVector), ParseHeaderError> {
         // Parsed the useful data
         let (input, data_vector): (&[u8], DataVector) = match data_type {
-            DataType::I8 => many_m_n(num_of_elements, num_of_elements, be_i8)(input).map(|(input, data): (&[u8], Vec<i8>)| (input, DataVector::I8(data))),
-            DataType::U8 => many_m_n(num_of_elements, num_of_elements, be_u8)(input).map(|(input, data): (&[u8], Vec<u8>)| (input, DataVector::U8(data))),
-            DataType::I16 => many_m_n(num_of_elements, num_of_elements, be_i16)(input).map(|(input, data): (&[u8], Vec<i16>)| (input, DataVector::I16(data))),
-            DataType::I32 => many_m_n(num_of_elements, num_of_elements, be_i32)(input).map(|(input, data): (&[u8], Vec<i32>)| (input, DataVector::I32(data))),
-            DataType::F32 => many_m_n(num_of_elements, num_of_elements, be_f32)(input).map(|(input, data): (&[u8], Vec<f32>)| (input, DataVector::F32(data))),
-            DataType::F64 => many_m_n(num_of_elements, num_of_elements, be_f64)(input).map(|(input, data): (&[u8], Vec<f64>)| (input, DataVector::F64(data))),
-        }.map_err(|err: NomError|{
-            ParseHeaderError::new(err, ParseHeaderErrorKind::DataElements)
-        })?;
+            DataType::I8 => many_m_n(num_of_elements, num_of_elements, be_i8)(input)
+                .map(|(input, data): (&[u8], Vec<i8>)| (input, DataVector::I8(data))),
+            DataType::U8 => many_m_n(num_of_elements, num_of_elements, be_u8)(input)
+                .map(|(input, data): (&[u8], Vec<u8>)| (input, DataVector::U8(data))),
+            DataType::I16 => many_m_n(num_of_elements, num_of_elements, be_i16)(input)
+                .map(|(input, data): (&[u8], Vec<i16>)| (input, DataVector::I16(data))),
+            DataType::I32 => many_m_n(num_of_elements, num_of_elements, be_i32)(input)
+                .map(|(input, data): (&[u8], Vec<i32>)| (input, DataVector::I32(data))),
+            DataType::F32 => many_m_n(num_of_elements, num_of_elements, be_f32)(input)
+                .map(|(input, data): (&[u8], Vec<f32>)| (input, DataVector::F32(data))),
+            DataType::F64 => many_m_n(num_of_elements, num_of_elements, be_f64)(input)
+                .map(|(input, data): (&[u8], Vec<f64>)| (input, DataVector::F64(data))),
+        }
+        .map_err(|err: NomError| ParseHeaderError::new(err, ParseHeaderErrorKind::DataElements))?;
 
         // Parse the zero padding bytes if necessary
         let num_of_bytes: usize = data_type.size_of() * num_of_elements;
-        let (input, _zero_padding_bytes): (&[u8], &[u8]) = FileReader::parse_zero_padding(input, compute_padding_size(num_of_bytes))?;
+        let (input, _zero_padding_bytes): (&[u8], &[u8]) =
+            FileReader::parse_zero_padding(input, compute_padding_size(num_of_bytes))?;
         Ok((input, data_vector))
     }
 
-    fn parse_zero_padding(input: &[u8], num_bytes: usize) -> Result<(&[u8], &[u8]), ParseHeaderError>
-    {
+    fn parse_zero_padding(
+        input: &[u8],
+        num_bytes: usize,
+    ) -> Result<(&[u8], &[u8]), ParseHeaderError> {
         verify(take(num_bytes), |padding_bytes: &[u8]| {
-            padding_bytes.iter().all(|byte: &u8| {
-                *byte == 0_u8
-            })
-        })(input).map_err(|err: NomError|{
-            ParseHeaderError::new(err, ParseHeaderErrorKind::ZeroPadding)
-        })
+            padding_bytes.iter().all(|byte: &u8| *byte == 0_u8)
+        })(input)
+        .map_err(|err: NomError| ParseHeaderError::new(err, ParseHeaderErrorKind::ZeroPadding))
     }
 
     // Parses the list of the dimensions from the header.
-    fn parse_dims_list(input: &[u8]) -> Result<(&[u8], Vec<(String, usize)>), ParseHeaderError>
-    {
-        fn parse_dim(input: &[u8]) -> Result<(&[u8], (String, usize)), ParseHeaderError>
-        {
+    fn parse_dims_list(input: &[u8]) -> Result<(&[u8], Vec<(String, usize)>), ParseHeaderError> {
+        fn parse_dim(input: &[u8]) -> Result<(&[u8], (String, usize)), ParseHeaderError> {
             let (input, dim_name): (&[u8], String) = FileReader::parse_name_string(input)?;
             let (input, dim_size): (&[u8], usize) = FileReader::parse_as_usize(input)?;
             Ok((input, (dim_name, dim_size)))
         }
-        let (input, dim_tag): (&[u8], &[u8]) = alt((tag(ABSENT_TAG), tag(DIMENSION_TAG)))(input).map_err(|err: NomError|{
-            ParseHeaderError::new(err, ParseHeaderErrorKind::DimTag)
-        })?;
+        let (input, dim_tag): (&[u8], &[u8]) = alt((tag(ABSENT_TAG), tag(DIMENSION_TAG)))(input)
+            .map_err(|err: NomError| ParseHeaderError::new(err, ParseHeaderErrorKind::DimTag))?;
         if dim_tag == &ABSENT_TAG {
             return Ok((input, vec![]));
         }
         let (mut input, num_of_dims): (&[u8], usize) = FileReader::parse_as_usize(input)?;
         let mut dims_list: Vec<(String, usize)> = Vec::with_capacity(num_of_dims);
-        for _ in 0..num_of_dims{
+        for _ in 0..num_of_dims {
             let (rem_input, dim): (&[u8], (String, usize)) = parse_dim(input)?;
             input = rem_input;
             dims_list.push(dim);
@@ -794,17 +827,19 @@ impl FileReader {
     }
 
     // Parses a list of attributes (global of from any variables) from the header.
-    fn parse_attrs_list(input: &[u8]) -> Result<(&[u8], Vec<(String, DataVector)>), ParseHeaderError>
-    {
-        fn parse_attr(input: &[u8]) -> Result<(&[u8], (String, DataVector)), ParseHeaderError>
-        {
+    fn parse_attrs_list(
+        input: &[u8],
+    ) -> Result<(&[u8], Vec<(String, DataVector)>), ParseHeaderError> {
+        fn parse_attr(input: &[u8]) -> Result<(&[u8], (String, DataVector)), ParseHeaderError> {
             let (input, attr_name): (&[u8], String) = FileReader::parse_name_string(input)?;
             let (input, attr_data_type): (&[u8], DataType) = FileReader::parse_data_type(input)?;
             let (input, num_of_elements): (&[u8], usize) = FileReader::parse_as_usize(input)?;
-            let (input, attr_data): (&[u8], DataVector) = FileReader::parse_typed_data_elements(input, num_of_elements, attr_data_type)?;
+            let (input, attr_data): (&[u8], DataVector) =
+                FileReader::parse_typed_data_elements(input, num_of_elements, attr_data_type)?;
             Ok((input, (attr_name, attr_data)))
         }
-        let (input, attr_tag): (&[u8], &[u8]) = alt((tag(ABSENT_TAG), tag(ATTRIBUTE_TAG)))(input).map_err(|err: NomError|{
+        let (input, attr_tag): (&[u8], &[u8]) = alt((tag(ABSENT_TAG), tag(ATTRIBUTE_TAG)))(input)
+            .map_err(|err: NomError| {
             ParseHeaderError::new(err, ParseHeaderErrorKind::AttrTag)
         })?;
         if attr_tag == &ABSENT_TAG {
@@ -812,8 +847,7 @@ impl FileReader {
         }
         let (mut input, num_of_attrs): (&[u8], usize) = FileReader::parse_as_usize(input)?;
         let mut attrs_list: Vec<(String, DataVector)> = Vec::with_capacity(num_of_attrs);
-        for _ in 0..num_of_attrs
-        {
+        for _ in 0..num_of_attrs {
             let (rem_input, attr): (&[u8], (String, DataVector)) = parse_attr(input)?;
             input = rem_input;
             attrs_list.push(attr);
@@ -822,52 +856,53 @@ impl FileReader {
     }
 
     // Parses a list of variables from the header.
-    fn parse_vars_list(input: &[u8], version: Version) -> Result<(&[u8], Vec<VariableParsedMetadata>), ParseHeaderError>
-    {
-        fn parse_dim_ids_list(input: &[u8]) -> Result<(&[u8], Vec<usize>), ParseHeaderError>
-        {
-                // number of dimensions
-                let (mut input, num_of_dims): (&[u8], usize) = FileReader::parse_as_usize(input)?;
-                // list of the dimension ids
-                let mut dim_ids_list: Vec<usize> = Vec::with_capacity(num_of_dims);
-                for _ in 0..num_of_dims {
-                    let(rem_input, dim_id): (&[u8], usize) = FileReader::parse_as_usize(input)?;
-                    input = rem_input;
-                    dim_ids_list.push(dim_id);
-                }
-                Ok((input, dim_ids_list))
+    fn parse_vars_list(
+        input: &[u8],
+        version: Version,
+    ) -> Result<(&[u8], Vec<VariableParsedMetadata>), ParseHeaderError> {
+        fn parse_dim_ids_list(input: &[u8]) -> Result<(&[u8], Vec<usize>), ParseHeaderError> {
+            // number of dimensions
+            let (mut input, num_of_dims): (&[u8], usize) = FileReader::parse_as_usize(input)?;
+            // list of the dimension ids
+            let mut dim_ids_list: Vec<usize> = Vec::with_capacity(num_of_dims);
+            for _ in 0..num_of_dims {
+                let (rem_input, dim_id): (&[u8], usize) = FileReader::parse_as_usize(input)?;
+                input = rem_input;
+                dim_ids_list.push(dim_id);
+            }
+            Ok((input, dim_ids_list))
         }
 
-        fn parse_offset(input: &[u8], version: Version) -> Result<(&[u8], Offset), ParseHeaderError>
-        {
+        fn parse_offset(
+            input: &[u8],
+            version: Version,
+        ) -> Result<(&[u8], Offset), ParseHeaderError> {
             match version {
-                Version::Classic => {
-                    be_i32(input).map(|(input, num_of_bytes): (&[u8], i32)| {
-                        (input, Offset::I32(num_of_bytes))
-                    })
-                },
-                Version::Offset64Bit => {
-                    be_i64(input).map(|(input, num_of_bytes): (&[u8], i64)| {
-                        (input, Offset::I64(num_of_bytes))
-                    })
-                },
-            }.map_err(|err: NomError| {
-                ParseHeaderError::new(err, ParseHeaderErrorKind::Offset)
-            })
+                Version::Classic => be_i32(input)
+                    .map(|(input, num_of_bytes): (&[u8], i32)| (input, Offset::I32(num_of_bytes))),
+                Version::Offset64Bit => be_i64(input)
+                    .map(|(input, num_of_bytes): (&[u8], i64)| (input, Offset::I64(num_of_bytes))),
+            }
+            .map_err(|err: NomError| ParseHeaderError::new(err, ParseHeaderErrorKind::Offset))
         }
 
-        fn parse_var(input: &[u8], version: Version) -> Result<(&[u8], VariableParsedMetadata), ParseHeaderError> {
+        fn parse_var(
+            input: &[u8],
+            version: Version,
+        ) -> Result<(&[u8], VariableParsedMetadata), ParseHeaderError> {
             // Variable name
             let (input, var_name): (&[u8], String) = FileReader::parse_name_string(input)?;
 
             // list of the dimensions
             let (input, dim_ids): (&[u8], Vec<usize>) = parse_dim_ids_list(input)?;
             // list of the variable attributes
-            let (input, attrs_list): (&[u8], Vec<(String, DataVector)>) = FileReader::parse_attrs_list(input)?;
+            let (input, attrs_list): (&[u8], Vec<(String, DataVector)>) =
+                FileReader::parse_attrs_list(input)?;
             // data type of the variable
-            let (input, data_type): (& [u8], DataType) = FileReader::parse_data_type(input)?;
+            let (input, data_type): (&[u8], DataType) = FileReader::parse_data_type(input)?;
             // size occupied in each record by the variable (number of bytes)
-            let (input, chunk_size): (&[u8], Option<usize>) = FileReader::parse_as_usize_optional(input)?;
+            let (input, chunk_size): (&[u8], Option<usize>) =
+                FileReader::parse_as_usize_optional(input)?;
             // begin offset (number of bytes)
             let (input, begin_offset): (&[u8], Offset) = parse_offset(input, version)?;
             let var_def = VariableParsedMetadata {
@@ -880,9 +915,8 @@ impl FileReader {
             };
             return Ok((input, var_def));
         }
-        let (input, var_tag): (&[u8], &[u8]) = alt((tag(ABSENT_TAG), tag(VARIABLE_TAG)))(input).map_err(|err: NomError| {
-            ParseHeaderError::new(err, ParseHeaderErrorKind::VarTag)
-        })?;
+        let (input, var_tag): (&[u8], &[u8]) = alt((tag(ABSENT_TAG), tag(VARIABLE_TAG)))(input)
+            .map_err(|err: NomError| ParseHeaderError::new(err, ParseHeaderErrorKind::VarTag))?;
         if var_tag == &ABSENT_TAG {
             return Ok((input, vec![]));
         }
@@ -897,7 +931,9 @@ impl FileReader {
     }
 
     fn find_var_info(&self, var_name: &str) -> Option<&VariableParsedMetadata> {
-        self.vars_info.iter().find(|var_info| var_info.name == var_name)
+        self.vars_info
+            .iter()
+            .find(|var_info| var_info.name == var_name)
     }
 }
 
@@ -910,5 +946,3 @@ struct VariableParsedMetadata {
     _chunk_size: Option<usize>,
     begin_offset: Offset,
 }
-
-

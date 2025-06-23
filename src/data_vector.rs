@@ -39,7 +39,7 @@ use crate::DataType;
 ///
 /// assert_eq!(NUM_VARS,                        data.len());
 /// assert_eq!(true,                            data.contains_key(LATITUDE_VAR_NAME));
-/// 
+///
 /// let latitude: DataVector = data.remove(LATITUDE_VAR_NAME).unwrap();
 /// assert_eq!(DataType::F32,                   latitude.data_type());
 /// let latitude: Vec<f32> = latitude.get_f32_into().unwrap();
@@ -56,7 +56,6 @@ pub enum DataVector {
 }
 
 impl DataVector {
-
     pub(crate) fn new(data_type: DataType, length: usize) -> Self {
         match data_type {
             DataType::I8 => DataVector::I8(vec![0; length]),

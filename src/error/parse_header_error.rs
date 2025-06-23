@@ -1,8 +1,6 @@
-
-
 // aliases
 pub(crate) type NomErrorKind = nom::error::ErrorKind;
-pub(crate) type NomError<'a> = nom::Err<(&'a[u8], NomErrorKind)>;
+pub(crate) type NomError<'a> = nom::Err<(&'a [u8], NomErrorKind)>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParseHeaderError {
@@ -11,7 +9,6 @@ pub struct ParseHeaderError {
 }
 
 impl ParseHeaderError {
-
     pub(crate) fn new<'a>(err: NomError<'a>, kind: ParseHeaderErrorKind) -> Self {
         Self {
             kind: kind,
@@ -30,7 +27,7 @@ impl ParseHeaderError {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InvalidBytes {
     Incomplete(nom::Needed),
-    Bytes(Vec<u8>)
+    Bytes(Vec<u8>),
 }
 
 impl<'a> std::convert::From<NomError<'a>> for InvalidBytes {
@@ -42,7 +39,6 @@ impl<'a> std::convert::From<NomError<'a>> for InvalidBytes {
         }
     }
 }
-
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParseHeaderErrorKind {

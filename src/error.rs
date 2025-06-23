@@ -1,8 +1,8 @@
 pub mod parse_header_error;
 pub use parse_header_error::ParseHeaderError;
 
+use crate::{DataType, Dimension};
 use std::rc::Rc;
-use crate::{Dimension, DataType};
 
 /// NetCDF-3 data set error
 ///
@@ -42,27 +42,71 @@ use crate::{Dimension, DataType};
 pub enum InvalidDataSet {
     DimensionAlreadyExists(String),
     DimensionNotDefined(String),
-    DimensionsNotDefined{var_name: String, undef_dim_names: Vec<String>},
-    DimensionsUsedMultipleTimes{var_name: String, get_dim_names: Vec<String>},
+    DimensionsNotDefined {
+        var_name: String,
+        undef_dim_names: Vec<String>,
+    },
+    DimensionsUsedMultipleTimes {
+        var_name: String,
+        get_dim_names: Vec<String>,
+    },
     UnlimitedDimensionAlreadyExists(String),
-    DimensionYetUsed{var_names: Vec<String>, dim_name: String},
+    DimensionYetUsed {
+        var_names: Vec<String>,
+        dim_name: String,
+    },
     DimensionNameNotValid(String),
-    DimensionIdsNotFound{defined: Vec<usize>, searched: Vec<usize>, not_found: Vec<usize>},
+    DimensionIdsNotFound {
+        defined: Vec<usize>,
+        searched: Vec<usize>,
+        not_found: Vec<usize>,
+    },
     FixedDimensionWithZeroSize(String),
-    MaximumFixedDimensionSizeExceeded{dim_name: String, get: usize},
-    DimensionsNotFound{defined: Vec<Rc<Dimension>>, searched: Vec<Rc<Dimension>>, not_found: Vec<Rc<Dimension>>},
+    MaximumFixedDimensionSizeExceeded {
+        dim_name: String,
+        get: usize,
+    },
+    DimensionsNotFound {
+        defined: Vec<Rc<Dimension>>,
+        searched: Vec<Rc<Dimension>>,
+        not_found: Vec<Rc<Dimension>>,
+    },
 
-    VariableAttributeAlreadyExists{var_name: String, attr_name: String},
-    VariableAttributeNotDefined{var_name: String, attr_name: String},
-    VariableAttributeNameNotValid{var_name: String, attr_name: String},
+    VariableAttributeAlreadyExists {
+        var_name: String,
+        attr_name: String,
+    },
+    VariableAttributeNotDefined {
+        var_name: String,
+        attr_name: String,
+    },
+    VariableAttributeNameNotValid {
+        var_name: String,
+        attr_name: String,
+    },
 
     VariableNotDefined(String),
     VariableNameNotValid(String),
     VariableAlreadyExists(String),
-    VariableMismatchDataType{var_name: String, req: DataType, get: DataType},
-    VariableMismatchDataLength{var_name: String, req: usize, get: usize},
-    UnlimitedDimensionMustBeDefinedFirst{var_name: String, unlim_dim_name: String, get_dim_names: Vec<String>},
-    MaximumDimensionsPerVariableExceeded{var_name: String, num_dims: usize},
+    VariableMismatchDataType {
+        var_name: String,
+        req: DataType,
+        get: DataType,
+    },
+    VariableMismatchDataLength {
+        var_name: String,
+        req: usize,
+        get: usize,
+    },
+    UnlimitedDimensionMustBeDefinedFirst {
+        var_name: String,
+        unlim_dim_name: String,
+        get_dim_names: Vec<String>,
+    },
+    MaximumDimensionsPerVariableExceeded {
+        var_name: String,
+        num_dims: usize,
+    },
 
     GlobalAttributeAlreadyExists(String),
     GlobalAttributeNotDefined(String),
@@ -82,24 +126,25 @@ pub enum ReadError {
     ParseHeader(ParseHeaderError),
     DataSet(InvalidDataSet),
     VariableNotDefined(String),
-    VariableMismatchDataType{var_name: String, req: DataType, get: DataType},
+    VariableMismatchDataType {
+        var_name: String,
+        req: DataType,
+        get: DataType,
+    },
     IOErrorKind(std::io::ErrorKind),
     ComputationNumberOfRecords,
-    RecordIndexExceeded{index: usize, num_records: usize},
+    RecordIndexExceeded {
+        index: usize,
+        num_records: usize,
+    },
     Unexpected,
 }
 
 impl ReadError {
-
-    pub fn header_is_incomplete(&self) -> bool
-    {
+    pub fn header_is_incomplete(&self) -> bool {
         let header_is_incomlete: bool = match &self {
-            ReadError::ParseHeader(parse_header_err) => {
-                parse_header_err.header_is_incomplete()
-            },
-            _ => {
-                false
-            },
+            ReadError::ParseHeader(parse_header_err) => parse_header_err.header_is_incomplete(),
+            _ => false,
         };
         return header_is_incomlete;
     }
@@ -131,18 +176,32 @@ impl std::convert::From<std::io::Error> for ReadError {
     }
 }
 
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum WriteError {
     IOErrorKind(std::io::ErrorKind),
     VariableNotDefined(String),
-    VariableMismatchDataType{var_name: String, req: DataType, get: DataType},
-    VariableMismatchDataLength{var_name: String, req: usize, get: usize},
+    VariableMismatchDataType {
+        var_name: String,
+        req: DataType,
+        get: DataType,
+    },
+    VariableMismatchDataLength {
+        var_name: String,
+        req: usize,
+        get: usize,
+    },
     ClassicVersionNotPossible,
     HeaderAlreadyDefined,
     HeaderNotDefined,
-    RecordIndexExceeded{index: usize, num_records: usize},
-    RecordMismatchDataLength{var_name: String, req: usize, get: usize},
+    RecordIndexExceeded {
+        index: usize,
+        num_records: usize,
+    },
+    RecordMismatchDataLength {
+        var_name: String,
+        req: usize,
+        get: usize,
+    },
     Unexpected,
 }
 
