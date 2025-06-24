@@ -3,7 +3,7 @@ use std::io::{Cursor, Read};
 use std::path::PathBuf;
 use std::rc::Rc;
 
-use tempdir::TempDir;
+use tempfile::{Builder, TempDir};
 
 use byteorder::{BigEndian, ReadBytesExt};
 
@@ -29,7 +29,7 @@ fn test_open() {
     const GLOBAL_ATTR_NAME_1: &str = "comment_1";
     const GLOBAL_ATTR_NAME_2: &str = "comment_2";
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -78,7 +78,7 @@ fn test_create_new() {
     const TEST_FILE_NAME: &str = "test_create_new.nc";
     const GLOBAL_ATTR_NAME: &str = "comment_1";
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -132,7 +132,7 @@ fn test_fill_missing_data_at_closing() {
     const FIXED_DIM_NAME: &str = "fixed_dim";
     const FIXED_DIM_SIZE: usize = 4;
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -204,7 +204,7 @@ fn test_write_record_i8() {
     const FIXED_DIM_NAME: &str = "fixed_dim";
     const FIXED_DIM_SIZE: usize = 4;
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -276,7 +276,7 @@ fn test_write_record_i8_errors() {
     const FIXED_DIM_NAME: &str = "fixed_dim";
     const FIXED_DIM_SIZE: usize = 4;
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -438,7 +438,7 @@ fn test_write_record_u8() {
     const FIXED_DIM_NAME: &str = "fixed_dim";
     const FIXED_DIM_SIZE: usize = 4;
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -511,7 +511,7 @@ fn test_write_record_u8_errors() {
     const FIXED_DIM_NAME: &str = "fixed_dim";
     const FIXED_DIM_SIZE: usize = 4;
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -673,7 +673,7 @@ fn test_write_record_i16() {
     const FIXED_DIM_NAME: &str = "fixed_dim";
     const FIXED_DIM_SIZE: usize = 4;
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -746,7 +746,7 @@ fn test_write_record_i16_errors() {
     const FIXED_DIM_NAME: &str = "fixed_dim";
     const FIXED_DIM_SIZE: usize = 4;
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -908,7 +908,7 @@ fn test_write_record_i32() {
     const FIXED_DIM_NAME: &str = "fixed_dim";
     const FIXED_DIM_SIZE: usize = 4;
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -981,7 +981,7 @@ fn test_write_record_i32_errors() {
     const FIXED_DIM_NAME: &str = "fixed_dim";
     const FIXED_DIM_SIZE: usize = 4;
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -1143,7 +1143,7 @@ fn test_write_record_f32() {
     const FIXED_DIM_NAME: &str = "fixed_dim";
     const FIXED_DIM_SIZE: usize = 4;
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -1215,7 +1215,7 @@ fn test_write_record_f32_errors() {
     const FIXED_DIM_NAME: &str = "fixed_dim";
     const FIXED_DIM_SIZE: usize = 4;
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -1377,7 +1377,7 @@ fn test_write_record_f64() {
     const FIXED_DIM_NAME: &str = "fixed_dim";
     const FIXED_DIM_SIZE: usize = 4;
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -1449,7 +1449,7 @@ fn test_write_record_f64_errors() {
     const FIXED_DIM_NAME: &str = "fixed_dim";
     const FIXED_DIM_SIZE: usize = 4;
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -1773,7 +1773,7 @@ fn test_write_var_i8() {
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
     ];
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -1825,7 +1825,7 @@ fn test_write_var_i8_errors() {
     const VAR_I8_DATA: [i8; VAR_I8_SIZE] = [
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
     ];
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -1959,7 +1959,7 @@ fn test_write_var_u8() {
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
     ];
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -2011,7 +2011,7 @@ fn test_write_var_u8_errors() {
     const VAR_U8_DATA: [u8; VAR_U8_SIZE] = [
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
     ];
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -2145,7 +2145,7 @@ fn test_write_var_i16() {
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
     ];
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -2199,7 +2199,7 @@ fn test_write_var_i16_errors() {
     const VAR_I16_DATA: [i16; VAR_I16_SIZE] = [
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
     ];
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -2333,7 +2333,7 @@ fn test_write_var_i32() {
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
     ];
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -2387,7 +2387,7 @@ fn test_write_var_i32_errors() {
     const VAR_I32_DATA: [i32; VAR_I32_SIZE] = [
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
     ];
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -2522,7 +2522,7 @@ fn test_write_var_f32() {
         17.0, 18.0, 19.0, 20.0,
     ];
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -2577,7 +2577,7 @@ fn test_write_var_f32_errors() {
         1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
         17.0, 18.0, 19.0, 20.0,
     ];
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -2712,7 +2712,7 @@ fn test_write_var_f64() {
         17.0, 18.0, 19.0, 20.0,
     ];
 
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 
@@ -2767,7 +2767,7 @@ fn test_write_var_f64_errors() {
         1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
         17.0, 18.0, 19.0, 20.0,
     ];
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let test_file_path: PathBuf = tmp_dir.path().join(TEST_FILE_NAME);
     assert_eq!(false, test_file_path.exists());
 

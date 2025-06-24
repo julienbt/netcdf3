@@ -228,7 +228,7 @@ impl core::fmt::Debug for dyn SeekWrite {
 /// use std::path::PathBuf;
 /// use std::io::Read;
 /// use copy_to_tmp_file::NC3_LIGHT_CLASSIC_FILE_BYTES;
-/// # use tempdir::TempDir;
+/// # use tempfile::{Builder, TempDir};
 ///
 /// use netcdf3::{FileWriter, DataSet, Version};
 /// const LATITUDE_DIM_NAME: &str = "latitude";
@@ -264,7 +264,7 @@ impl core::fmt::Debug for dyn SeekWrite {
 /// # let (tmp_dir, output_file_path): (TempDir, PathBuf) = {
 /// #     const TMP_DIR_PREFIX: &str = "tests_netcdf_3";
 /// #     const OUTPUT_FILE_NAME: &str = "example.nc";
-/// #     let mut tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+/// #     let mut tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
 /// #     let output_file_path = tmp_dir.path().join(OUTPUT_FILE_NAME);
 /// #     (tmp_dir, output_file_path)
 /// # };
@@ -391,7 +391,7 @@ impl<'a> FileWriter<'a> {
     /// ```
     /// use std::path::PathBuf;
     /// use netcdf3::{FileWriter, DataSet, Version};
-    /// use tempdir::TempDir;
+    /// use tempfile::{Builder, TempDir};
     ///
     /// const TMP_DIR_PREFIX: &str = "netcdf3_tests_";
     /// const FILE_NAME_1: &str = "empty_data_set_1.nc";
@@ -399,7 +399,7 @@ impl<'a> FileWriter<'a> {
     /// const HEADER_MIN_SIZE_1: usize = 0;
     /// const HEADER_MIN_SIZE_2: usize = 1024;
     ///
-    /// let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    /// let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     ///
     /// // Create 2 NetCDF-3 files containing empty data sets but with different `header_min_size`
     /// // ---------------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 use std::io::Write;
 
-use tempdir::TempDir;
+use tempfile::{Builder, TempDir};
 
 // Empty data set
 pub static EMPTY_DATA_SET_FILE_NAME: &'static str = "empty_data_set.nc";
@@ -39,9 +39,9 @@ pub static NC3_CONTAINING_DEFAULT_FILL_VALUES_FILE_BYTES: &'static[u8] = include
 /// Do not forget to close the returned temporary directy explicitly to remove it.
 pub fn copy_bytes_to_tmp_file(bytes: &[u8], file_name: &str) -> (TempDir, std::path::PathBuf)
 {
-    // Crete the temporary directory
-    let tmp_dir: TempDir = TempDir::new("netcdf3_test_data").unwrap();
-    // Crete the temporary file
+    // Create the temporary directory
+    let tmp_dir: TempDir = Builder::new().prefix("netcdf3_test_data").tempdir().unwrap();
+    // Create the temporary file
     let tmp_file_path = std::path::PathBuf::from(tmp_dir.path()).join(file_name);
     let mut tmp_file = std::fs::File::create(tmp_file_path.clone()).unwrap();
     // Copy all bytes

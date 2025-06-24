@@ -6,7 +6,7 @@
 use std::io::{BufWriter, Read, Seek, Write};
 use std::path::Path;
 
-use tempdir::TempDir;
+use tempfile::{Builder, TempDir};
 
 use netcdf3::{DataSet, FileWriter, Variable, Version};
 
@@ -56,7 +56,7 @@ fn test_write_file_nc_fill_values() {
     }
 
     // Write the NetCDF-3 file
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let output_file_path = tmp_dir.path().join(NC3_FILL_VALUES_FILE_NAME);
     write_file_nc_fill_values(&output_file_path);
 
@@ -130,7 +130,7 @@ fn test_write_file_scalar_vars() {
     }
 
     // Write the NetCDF-3 file
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let output_file_path = tmp_dir.path().join(SCALAR_VARIABLES_FILE_NAME);
     write_file_scalar_vars(&output_file_path);
 
@@ -160,7 +160,7 @@ fn test_write_file_empty_data_set() {
     }
 
     // Write the NetCDF-3 file
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let output_file_path = tmp_dir.path().join(EMPTY_DATA_SET_FILE_NAME);
     write_file_empty_data_set(&output_file_path);
 
@@ -428,7 +428,7 @@ fn test_write_file_nc3_classic() {
     }
 
     // Write the NetCDF-3 file
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let output_file_path = tmp_dir.path().join(NC3_CLASSIC_FILE_NAME);
     write_file_nc3_classic(&output_file_path);
 
@@ -468,7 +468,7 @@ fn test_write_file_nc3_classic_seek_write() {
     }
 
     // Write the NetCDF-3 file
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let output_file_path = tmp_dir.path().join(NC3_CLASSIC_FILE_NAME);
     let temp_file = std::fs::File::create(&output_file_path).unwrap();
     // BufWriter implements the Seek and Write traits
@@ -511,7 +511,7 @@ fn test_write_file_nc3_64bit_offset() {
     }
 
     // Write the NetCDF-3 file
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let output_file_path = tmp_dir.path().join(NC3_64BIT_OFFSET_FILE_NAME);
     write_file_nc3_64bit_offset(&output_file_path);
 
@@ -598,7 +598,7 @@ fn test_write_file_containing_default_fill_values() {
     }
 
     // Write the NetCDF-3 file
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let output_file_path = tmp_dir
         .path()
         .join(NC3_CONTAINING_DEFAULT_FILL_VALUES_FILE_NAME);
@@ -715,7 +715,7 @@ fn test_write_file_zero_sized_unlimited_dim() {
     }
 
     // Write the NetCDF-3 file
-    let tmp_dir: TempDir = TempDir::new(TMP_DIR_PREFIX).unwrap();
+    let tmp_dir: TempDir = Builder::new().prefix(TMP_DIR_PREFIX).tempdir().unwrap();
     let output_file_path = tmp_dir.path().join(NC3_ZERO_SIZED_UNLIMITED_DIM_FILE_NAME);
     write_file_zero_sized_unlimited_dim(&output_file_path);
 
