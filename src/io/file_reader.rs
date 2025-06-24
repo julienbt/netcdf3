@@ -7,6 +7,7 @@ use std::rc::Rc;
 
 use byteorder::{BigEndian, ReadBytesExt};
 
+use nom::Parser;
 use nom::{
     branch::alt,
     bytes::streaming::{tag, take},
@@ -696,7 +697,8 @@ impl FileReader {
     fn parse_version(input: &[u8]) -> Result<(&[u8], Version), ParseHeaderError> {
         let (input, version_number): (&[u8], u8) = verify(be_u8, |ver_num: &u8| {
             ver_num == &(Version::Classic as u8) || ver_num == &(Version::Offset64Bit as u8)
-        })(input)
+        })
+        .parse(input)
         .map_err(|err: NomError| ParseHeaderError::new(err, ParseHeaderErrorKind::VersionNumber))?;
         let version = Version::try_from(version_number).unwrap(); // previously checked
         Ok((input, version))
@@ -704,9 +706,11 @@ impl FileReader {
 
     /// Parses a `i32` word and checks that it is non-negative.
     fn parse_non_neg_i32(input: &[u8]) -> Result<(&[u8], i32), ParseHeaderError> {
-        verify(be_i32, |number: &i32| *number >= 0_i32)(input).map_err(|err: NomError| {
-            ParseHeaderError::new(err, ParseHeaderErrorKind::NonNegativeI32)
-        })
+        verify(be_i32, |number: &i32| *number >= 0_i32)
+            .parse(input)
+            .map_err(|err: NomError| {
+                ParseHeaderError::new(err, ParseHeaderErrorKind::NonNegativeI32)
+            })
     }
 
     /// Parses a non-negative `i32` word and converts it to a `usize`.
@@ -724,7 +728,8 @@ impl FileReader {
         const INDETERMINATE_VALUE: u32 = u32::MAX;
         let (input, value): (&[u8], u32) = verify(be_u32, |number: &u32| {
             *number <= (i32::MAX as u32) || *number == INDETERMINATE_VALUE
-        })(input)
+        })
+        .parse(input)
         .map_err(|err: NomError| {
             ParseHeaderError::new(err, ParseHeaderErrorKind::NonNegativeI32)
         })?;
@@ -745,7 +750,8 @@ impl FileReader {
         let (input, num_of_bytes): (&[u8], usize) = FileReader::parse_as_usize(input)?;
         let (input, name): (&[u8], String) = map_res(take(num_of_bytes), |bytes: &[u8]| {
             String::from_utf8(bytes.to_vec())
-        })(input)
+        })
+        .parse(input)
         .map_err(|err: NomError| ParseHeaderError::new(err, ParseHeaderErrorKind::Utf8))?;
         // Take the zero padding bytes if necessary
         let (input, _zero_padding_bytes): (&[u8], &[u8]) =
@@ -770,17 +776,23 @@ impl FileReader {
     ) -> Result<(&[u8], DataVector), ParseHeaderError> {
         // Parsed the useful data
         let (input, data_vector): (&[u8], DataVector) = match data_type {
-            DataType::I8 => many_m_n(num_of_elements, num_of_elements, be_i8)(input)
+            DataType::I8 => many_m_n(num_of_elements, num_of_elements, be_i8)
+                .parse(input)
                 .map(|(input, data): (&[u8], Vec<i8>)| (input, DataVector::I8(data))),
-            DataType::U8 => many_m_n(num_of_elements, num_of_elements, be_u8)(input)
+            DataType::U8 => many_m_n(num_of_elements, num_of_elements, be_u8)
+                .parse(input)
                 .map(|(input, data): (&[u8], Vec<u8>)| (input, DataVector::U8(data))),
-            DataType::I16 => many_m_n(num_of_elements, num_of_elements, be_i16)(input)
+            DataType::I16 => many_m_n(num_of_elements, num_of_elements, be_i16)
+                .parse(input)
                 .map(|(input, data): (&[u8], Vec<i16>)| (input, DataVector::I16(data))),
-            DataType::I32 => many_m_n(num_of_elements, num_of_elements, be_i32)(input)
+            DataType::I32 => many_m_n(num_of_elements, num_of_elements, be_i32)
+                .parse(input)
                 .map(|(input, data): (&[u8], Vec<i32>)| (input, DataVector::I32(data))),
-            DataType::F32 => many_m_n(num_of_elements, num_of_elements, be_f32)(input)
+            DataType::F32 => many_m_n(num_of_elements, num_of_elements, be_f32)
+                .parse(input)
                 .map(|(input, data): (&[u8], Vec<f32>)| (input, DataVector::F32(data))),
-            DataType::F64 => many_m_n(num_of_elements, num_of_elements, be_f64)(input)
+            DataType::F64 => many_m_n(num_of_elements, num_of_elements, be_f64)
+                .parse(input)
                 .map(|(input, data): (&[u8], Vec<f64>)| (input, DataVector::F64(data))),
         }
         .map_err(|err: NomError| ParseHeaderError::new(err, ParseHeaderErrorKind::DataElements))?;
@@ -798,7 +810,8 @@ impl FileReader {
     ) -> Result<(&[u8], &[u8]), ParseHeaderError> {
         verify(take(num_bytes), |padding_bytes: &[u8]| {
             padding_bytes.iter().all(|byte: &u8| *byte == 0_u8)
-        })(input)
+        })
+        .parse(input)
         .map_err(|err: NomError| ParseHeaderError::new(err, ParseHeaderErrorKind::ZeroPadding))
     }
 
@@ -810,7 +823,8 @@ impl FileReader {
             let (input, dim_size): (&[u8], usize) = FileReader::parse_as_usize(input)?;
             Ok((input, (dim_name, dim_size)))
         }
-        let (input, dim_tag): (&[u8], &[u8]) = alt((tag(ABSENT_TAG), tag(DIMENSION_TAG)))(input)
+        let (input, dim_tag): (&[u8], &[u8]) = alt((tag(ABSENT_TAG), tag(DIMENSION_TAG)))
+            .parse(input)
             .map_err(|err: NomError| ParseHeaderError::new(err, ParseHeaderErrorKind::DimTag))?;
         if dim_tag == ABSENT_TAG {
             return Ok((input, vec![]));
@@ -839,10 +853,9 @@ impl FileReader {
                 FileReader::parse_typed_data_elements(input, num_of_elements, attr_data_type)?;
             Ok((input, (attr_name, attr_data)))
         }
-        let (input, attr_tag): (&[u8], &[u8]) = alt((tag(ABSENT_TAG), tag(ATTRIBUTE_TAG)))(input)
-            .map_err(|err: NomError| {
-            ParseHeaderError::new(err, ParseHeaderErrorKind::AttrTag)
-        })?;
+        let (input, attr_tag): (&[u8], &[u8]) = alt((tag(ABSENT_TAG), tag(ATTRIBUTE_TAG)))
+            .parse(input)
+            .map_err(|err: NomError| ParseHeaderError::new(err, ParseHeaderErrorKind::AttrTag))?;
         if attr_tag == ABSENT_TAG {
             return Ok((input, vec![]));
         }
@@ -916,7 +929,8 @@ impl FileReader {
             };
             Ok((input, var_def))
         }
-        let (input, var_tag): (&[u8], &[u8]) = alt((tag(ABSENT_TAG), tag(VARIABLE_TAG)))(input)
+        let (input, var_tag): (&[u8], &[u8]) = alt((tag(ABSENT_TAG), tag(VARIABLE_TAG)))
+            .parse(input)
             .map_err(|err: NomError| ParseHeaderError::new(err, ParseHeaderErrorKind::VarTag))?;
         if var_tag == ABSENT_TAG {
             return Ok((input, vec![]));

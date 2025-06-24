@@ -21,13 +21,13 @@ impl std::convert::From<Offset> for i64 {
 }
 
 /// These bytes mean the list (dimensions, attributes or variable) is not defined.
-pub(crate) const ABSENT_TAG: [u8; 8] = [0; 8];
+pub(crate) const ABSENT_TAG: &[u8] = &[0; 8];
 /// Bytes for the list of dimensions
-pub(crate) const DIMENSION_TAG: [u8; 4] = [0, 0, 0, 0x0A];
+pub(crate) const DIMENSION_TAG: &[u8] = &[0, 0, 0, 0x0A];
 /// Bytes for the list of variables
-pub(crate) const VARIABLE_TAG: [u8; 4] = [0, 0, 0, 0x0b];
+pub(crate) const VARIABLE_TAG: &[u8] = &[0, 0, 0, 0x0b];
 /// Bytes for the lists attributes (global or for each variable).
-pub(crate) const ATTRIBUTE_TAG: [u8; 4] = [0, 0, 0, 0x0C];
+pub(crate) const ATTRIBUTE_TAG: &[u8] = &[0, 0, 0, 0x0C];
 
 #[inline]
 /// Compute and return the number of bytes of the padding required to fill remaining bytes up.

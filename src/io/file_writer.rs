@@ -742,10 +742,10 @@ impl<'a> FileWriter<'a> {
         let mut num_bytes: usize = 0;
         if dims_list.is_empty() {
             // Write the ABSENT_TAG
-            num_bytes += out_stream.write(&ABSENT_TAG)?;
+            num_bytes += out_stream.write(ABSENT_TAG)?;
         } else {
             // Write the DIENSION_TAG
-            num_bytes += out_stream.write(&DIMENSION_TAG)?;
+            num_bytes += out_stream.write(DIMENSION_TAG)?;
 
             // Write the number of dimensions
             let num_dims: usize = dims_list.len();
@@ -793,10 +793,10 @@ impl<'a> FileWriter<'a> {
 
         if attrs_list.is_empty() {
             // Write the ABSENT_TAG
-            num_bytes += out_stream.write(&ABSENT_TAG)?;
+            num_bytes += out_stream.write(ABSENT_TAG)?;
         } else {
             // Write the ATTRIBUTE_TAG
-            num_bytes += out_stream.write(&ATTRIBUTE_TAG)?;
+            num_bytes += out_stream.write(ATTRIBUTE_TAG)?;
             // Write the number of attributes
             let num_attrs: usize = attrs_list.len();
             let bytes: [u8; 4] = (num_attrs as i32).to_be_bytes();
@@ -860,10 +860,10 @@ impl<'a> FileWriter<'a> {
         let mut num_bytes: usize = 0;
         if vars_metadata_list.is_empty() {
             // Write the ABSENT_TAG
-            num_bytes += out_stream.write(&ABSENT_TAG)?;
+            num_bytes += out_stream.write(ABSENT_TAG)?;
         } else {
             // Write the VARIABLE_TAG
-            num_bytes += out_stream.write(&VARIABLE_TAG)?;
+            num_bytes += out_stream.write(VARIABLE_TAG)?;
 
             // Write the number of variables
             let num_vars: usize = vars_metadata_list.len();
