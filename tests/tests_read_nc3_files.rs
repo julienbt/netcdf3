@@ -1,4 +1,5 @@
 #![cfg(test)]
+use std::io::Cursor;
 use std::rc::Rc;
 
 use copy_to_tmp_file::{
@@ -64,18 +65,7 @@ const TEMP_F64_VAR_DATA: [f64; 30] = [0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10
 const TEMP_F64_VAR_LEN: usize = TEMP_F64_VAR_DATA.len();
 
 
-
-#[test]
-fn test_read_file_nc3_classic() {
-
-    // Copy bytes to a temporary file
-    // ------------------------------
-    let (tmp_dir, input_data_file_path) = copy_bytes_to_tmp_file(NC3_CLASSIC_FILE_BYTES, NC3_CLASSIC_FILE_NAME);
-
-    // Open the NetCDF-3 file
-    // ----------------------
-    let mut file_reader = FileReader::open(input_data_file_path).unwrap();
-
+fn check_nc3_classic_data(mut file_reader: &mut FileReader) {
     // Check the NetCDF-3 definition
     // -----------------------------
     assert_eq!(Version::Classic,                                                    file_reader.version());
@@ -89,8 +79,38 @@ fn test_read_file_nc3_classic() {
     // Check the NetCDF-3 data
     // -----------------------
     check_temperatures_data(&mut file_reader);
+}
+
+#[test]
+fn test_read_file_nc3_classic() {
+
+    // Copy bytes to a temporary file
+    // ------------------------------
+    let (tmp_dir, input_data_file_path) = copy_bytes_to_tmp_file(NC3_CLASSIC_FILE_BYTES, NC3_CLASSIC_FILE_NAME);
+
+    // Open the NetCDF-3 file
+    // ----------------------
+    let mut file_reader = FileReader::open(input_data_file_path).unwrap();
+
+    check_nc3_classic_data(&mut file_reader);
 
     tmp_dir.close().unwrap();
+}
+
+#[test]
+/// Test reading a file through an input that implement Seek and Read traits.
+fn test_read_file_nc3_classic_with_seek_read() {
+
+    // Create a cursor (implements Seek and Read traits) for reading they NetCDF-3 bytes.
+    // ------------------------------
+    let cursor = Cursor::new(NC3_CLASSIC_FILE_BYTES);
+    let boxed_cursor = Box::new(cursor);
+
+    // Open the NetCDF-3 file
+    // ----------------------
+    let mut file_reader = FileReader::open_seek_read(NC3_CLASSIC_FILE_NAME, boxed_cursor).unwrap();
+
+    check_nc3_classic_data(&mut file_reader);
 }
 
 #[test]
