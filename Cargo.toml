@@ -1,6 +1,6 @@
 [package]
 name = "netcdf3"
-version = "0.5.3"
+version = "0.6.0"
 authors = ["Julien Bt"]
 edition = "2018"
 description = "A pure Rust library for reading and writing NetCDF-3 files"
