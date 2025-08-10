@@ -941,9 +941,9 @@ impl<'a> ComputedDataSetMetadata<'a> {
     ///
     /// 0. The position of the variables stored in the *data part* (a `usize` instance).
     /// 1. The header metadata of each variable :
-    ///     0. A reference to the variable (a `&Variable` instance).
-    ///     1. The IDs of its dimensions (a `Vec<usize>` instance)
-    ///     2. The `data_offset` to located the first chunck of the variable **from the begining of the data part** (a`usize` instance).
+    ///   0. A reference to the variable (a `&Variable` instance).
+    ///   1. The IDs of its dimensions (a `Vec<usize>` instance)
+    ///   2. The `data_offset` to located the first chunck of the variable **from the begining of the data part** (a`usize` instance).
     fn new(
         data_set: &'a DataSet,
         version: Version,
