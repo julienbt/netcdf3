@@ -9,7 +9,6 @@ pub enum Version {
 }
 
 impl std::convert::TryFrom<u8> for Version {
-
     type Error = &'static str;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
@@ -22,16 +21,21 @@ impl std::convert::TryFrom<u8> for Version {
 }
 
 #[cfg(test)]
-mod tests
-{
-    use std::convert::TryFrom;
+mod tests {
     use super::Version;
+    use std::convert::TryFrom;
 
     #[test]
     fn test_version_try_from_u8() {
-        assert_eq!(Err("Invalid value for a NetCDF-3 version."),    Version::try_from(0_u8));
-        assert_eq!(Ok(Version::Classic),                            Version::try_from(1_u8));
-        assert_eq!(Ok(Version::Offset64Bit),                        Version::try_from(2_u8));
-        assert_eq!(Err("Invalid value for a NetCDF-3 version."),    Version::try_from(3_u8));
+        assert_eq!(
+            Err("Invalid value for a NetCDF-3 version."),
+            Version::try_from(0_u8)
+        );
+        assert_eq!(Ok(Version::Classic), Version::try_from(1_u8));
+        assert_eq!(Ok(Version::Offset64Bit), Version::try_from(2_u8));
+        assert_eq!(
+            Err("Invalid value for a NetCDF-3 version."),
+            Version::try_from(3_u8)
+        );
     }
 }

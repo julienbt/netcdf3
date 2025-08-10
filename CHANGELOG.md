@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.1 unreleased
+
+### Added
+
+- Checks for formatting and linting added to CI.
+
+### Changed
+
+- Dependencies updated.
+- Standard formatting used.
+- Linting: clippy warnings fixed.
+
 ## 0.6.0 2025-07-27
 
 ### Changed

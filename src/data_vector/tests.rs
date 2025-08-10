@@ -31,80 +31,127 @@ fn test_get_len() {
 }
 
 #[test]
+fn test_is_empty() {
+    assert!(DataVector::I8(vec![]).is_empty());
+    assert!(DataVector::U8(vec![]).is_empty());
+    assert!(DataVector::I16(vec![]).is_empty());
+    assert!(DataVector::I32(vec![]).is_empty());
+    assert!(DataVector::F32(vec![]).is_empty());
+    assert!(DataVector::F64(vec![]).is_empty());
+
+    assert!(!DataVector::I8(vec![1, 2, 3]).is_empty());
+    assert!(!DataVector::U8(vec![1, 2, 3]).is_empty());
+    assert!(!DataVector::I16(vec![1, 2, 3]).is_empty());
+    assert!(!DataVector::I32(vec![1, 2, 3]).is_empty());
+    assert!(!DataVector::F32(vec![1.0, 2.0, 3.0]).is_empty());
+    assert!(!DataVector::F64(vec![1.0, 2.0, 3.0]).is_empty());
+}
+
+#[test]
 fn test_get_i8() {
-    assert_eq!(Some(&[1, 2, 3][..]),        DataVector::I8(vec![1, 2, 3]).get_i8());
-    assert_eq!(None,                        DataVector::U8(vec![1, 2, 3]).get_i8());
-    assert_eq!(None,                        DataVector::I16(vec![1, 2, 3]).get_i8());
-    assert_eq!(None,                        DataVector::I32(vec![1, 2, 3]).get_i8());
-    assert_eq!(None,                        DataVector::F32(vec![1.0, 2.0, 3.0]).get_i8());
-    assert_eq!(None,                        DataVector::F64(vec![1.0, 2.0, 3.0]).get_i8());
+    assert_eq!(Some(&[1, 2, 3][..]), DataVector::I8(vec![1, 2, 3]).get_i8());
+    assert_eq!(None, DataVector::U8(vec![1, 2, 3]).get_i8());
+    assert_eq!(None, DataVector::I16(vec![1, 2, 3]).get_i8());
+    assert_eq!(None, DataVector::I32(vec![1, 2, 3]).get_i8());
+    assert_eq!(None, DataVector::F32(vec![1.0, 2.0, 3.0]).get_i8());
+    assert_eq!(None, DataVector::F64(vec![1.0, 2.0, 3.0]).get_i8());
 }
 
 #[test]
 fn test_get_u8() {
-    assert_eq!(None,                        DataVector::I8(vec![1, 2, 3]).get_u8());
-    assert_eq!(Some(&[1, 2, 3][..]),        DataVector::U8(vec![1, 2, 3]).get_u8());
-    assert_eq!(None,                        DataVector::I16(vec![1, 2, 3]).get_u8());
-    assert_eq!(None,                        DataVector::I32(vec![1, 2, 3]).get_u8());
-    assert_eq!(None,                        DataVector::F32(vec![1.0, 2.0, 3.0]).get_u8());
-    assert_eq!(None,                        DataVector::F64(vec![1.0, 2.0, 3.0]).get_u8());
+    assert_eq!(None, DataVector::I8(vec![1, 2, 3]).get_u8());
+    assert_eq!(Some(&[1, 2, 3][..]), DataVector::U8(vec![1, 2, 3]).get_u8());
+    assert_eq!(None, DataVector::I16(vec![1, 2, 3]).get_u8());
+    assert_eq!(None, DataVector::I32(vec![1, 2, 3]).get_u8());
+    assert_eq!(None, DataVector::F32(vec![1.0, 2.0, 3.0]).get_u8());
+    assert_eq!(None, DataVector::F64(vec![1.0, 2.0, 3.0]).get_u8());
 }
 
 #[test]
 fn test_get_i16() {
-    assert_eq!(None,                        DataVector::I8(vec![1, 2, 3]).get_i16());
-    assert_eq!(None,                        DataVector::U8(vec![1, 2, 3]).get_i16());
-    assert_eq!(Some(&[1, 2, 3][..]),        DataVector::I16(vec![1, 2, 3]).get_i16());
-    assert_eq!(None,                        DataVector::I32(vec![1, 2, 3]).get_i16());
-    assert_eq!(None,                        DataVector::F32(vec![1.0, 2.0, 3.0]).get_i16());
-    assert_eq!(None,                        DataVector::F64(vec![1.0, 2.0, 3.0]).get_i16());
+    assert_eq!(None, DataVector::I8(vec![1, 2, 3]).get_i16());
+    assert_eq!(None, DataVector::U8(vec![1, 2, 3]).get_i16());
+    assert_eq!(
+        Some(&[1, 2, 3][..]),
+        DataVector::I16(vec![1, 2, 3]).get_i16()
+    );
+    assert_eq!(None, DataVector::I32(vec![1, 2, 3]).get_i16());
+    assert_eq!(None, DataVector::F32(vec![1.0, 2.0, 3.0]).get_i16());
+    assert_eq!(None, DataVector::F64(vec![1.0, 2.0, 3.0]).get_i16());
 }
 
 #[test]
 fn test_get_i32() {
-    assert_eq!(None,                        DataVector::I8(vec![1, 2, 3]).get_i32());
-    assert_eq!(None,                        DataVector::U8(vec![1, 2, 3]).get_i32());
-    assert_eq!(None,                        DataVector::I16(vec![1, 2, 3]).get_i32());
-    assert_eq!(Some(&[1, 2, 3][..]),        DataVector::I32(vec![1, 2, 3]).get_i32());
-    assert_eq!(None,                        DataVector::F32(vec![1.0, 2.0, 3.0]).get_i32());
-    assert_eq!(None,                        DataVector::F64(vec![1.0, 2.0, 3.0]).get_i32());
+    assert_eq!(None, DataVector::I8(vec![1, 2, 3]).get_i32());
+    assert_eq!(None, DataVector::U8(vec![1, 2, 3]).get_i32());
+    assert_eq!(None, DataVector::I16(vec![1, 2, 3]).get_i32());
+    assert_eq!(
+        Some(&[1, 2, 3][..]),
+        DataVector::I32(vec![1, 2, 3]).get_i32()
+    );
+    assert_eq!(None, DataVector::F32(vec![1.0, 2.0, 3.0]).get_i32());
+    assert_eq!(None, DataVector::F64(vec![1.0, 2.0, 3.0]).get_i32());
 }
 
 #[test]
 fn test_get_f32() {
-    assert_eq!(None,                        DataVector::I8(vec![1, 2, 3]).get_f32());
-    assert_eq!(None,                        DataVector::U8(vec![1, 2, 3]).get_f32());
-    assert_eq!(None,                        DataVector::I16(vec![1, 2, 3]).get_f32());
-    assert_eq!(None,                        DataVector::I32(vec![1, 2, 3]).get_f32());
-    assert_eq!(Some(&[1.0, 2.0, 3.0][..]),  DataVector::F32(vec![1.0, 2.0, 3.0]).get_f32());
-    assert_eq!(None,                        DataVector::F64(vec![1.0, 2.0, 3.0]).get_f32());
+    assert_eq!(None, DataVector::I8(vec![1, 2, 3]).get_f32());
+    assert_eq!(None, DataVector::U8(vec![1, 2, 3]).get_f32());
+    assert_eq!(None, DataVector::I16(vec![1, 2, 3]).get_f32());
+    assert_eq!(None, DataVector::I32(vec![1, 2, 3]).get_f32());
+    assert_eq!(
+        Some(&[1.0, 2.0, 3.0][..]),
+        DataVector::F32(vec![1.0, 2.0, 3.0]).get_f32()
+    );
+    assert_eq!(None, DataVector::F64(vec![1.0, 2.0, 3.0]).get_f32());
 }
 
 #[test]
 fn test_get_f64() {
-    assert_eq!(None,                        DataVector::I8(vec![1, 2, 3]).get_f64());
-    assert_eq!(None,                        DataVector::U8(vec![1, 2, 3]).get_f64());
-    assert_eq!(None,                        DataVector::I16(vec![1, 2, 3]).get_f64());
-    assert_eq!(None,                        DataVector::I32(vec![1, 2, 3]).get_f64());
-    assert_eq!(None,                        DataVector::F32(vec![1.0, 2.0, 3.0]).get_f64());
-    assert_eq!(Some(&[1.0, 2.0, 3.0][..]),  DataVector::F64(vec![1.0, 2.0, 3.0]).get_f64());
+    assert_eq!(None, DataVector::I8(vec![1, 2, 3]).get_f64());
+    assert_eq!(None, DataVector::U8(vec![1, 2, 3]).get_f64());
+    assert_eq!(None, DataVector::I16(vec![1, 2, 3]).get_f64());
+    assert_eq!(None, DataVector::I32(vec![1, 2, 3]).get_f64());
+    assert_eq!(None, DataVector::F32(vec![1.0, 2.0, 3.0]).get_f64());
+    assert_eq!(
+        Some(&[1.0, 2.0, 3.0][..]),
+        DataVector::F64(vec![1.0, 2.0, 3.0]).get_f64()
+    );
 }
 
 #[test]
 fn test_get_i8_into() {
-    assert_eq!(Ok(vec![1, 2, 3]),                           DataVector::I8(vec![1, 2, 3]).get_i8_into());
-    assert_eq!(Err(DataVector::U8(vec![1, 2, 3])),          DataVector::U8(vec![1, 2, 3]).get_i8_into());
-    assert_eq!(Err(DataVector::I16(vec![1, 2, 3])),         DataVector::I16(vec![1, 2, 3]).get_i8_into());
-    assert_eq!(Err(DataVector::I32(vec![1, 2, 3])),         DataVector::I32(vec![1, 2, 3]).get_i8_into());
-    assert_eq!(Err(DataVector::F32(vec![1.0, 2.0, 3.0])),   DataVector::F32(vec![1.0, 2.0, 3.0]).get_i8_into());
-    assert_eq!(Err(DataVector::F64(vec![1.0, 2.0, 3.0])),   DataVector::F64(vec![1.0, 2.0, 3.0]).get_i8_into());
+    assert_eq!(
+        Ok(vec![1, 2, 3]),
+        DataVector::I8(vec![1, 2, 3]).get_i8_into()
+    );
+    assert_eq!(
+        Err(DataVector::U8(vec![1, 2, 3])),
+        DataVector::U8(vec![1, 2, 3]).get_i8_into()
+    );
+    assert_eq!(
+        Err(DataVector::I16(vec![1, 2, 3])),
+        DataVector::I16(vec![1, 2, 3]).get_i8_into()
+    );
+    assert_eq!(
+        Err(DataVector::I32(vec![1, 2, 3])),
+        DataVector::I32(vec![1, 2, 3]).get_i8_into()
+    );
+    assert_eq!(
+        Err(DataVector::F32(vec![1.0, 2.0, 3.0])),
+        DataVector::F32(vec![1.0, 2.0, 3.0]).get_i8_into()
+    );
+    assert_eq!(
+        Err(DataVector::F64(vec![1.0, 2.0, 3.0])),
+        DataVector::F64(vec![1.0, 2.0, 3.0]).get_i8_into()
+    );
     {
-        let data_1: Vec<i8> = vec![1, 2 ,3];
-        let ptr_1 : *const i8 = data_1.as_ptr();
+        let data_1: Vec<i8> = vec![1, 2, 3];
+        let ptr_1: *const i8 = data_1.as_ptr();
 
         // Frirst create a `DataVector::I8`
         let data_vec: DataVector = DataVector::I8(data_1);
-        assert_eq!(DataType::I8,               data_vec.data_type());
+        assert_eq!(DataType::I8, data_vec.data_type());
 
         // Try to extract the internal vector with the wrong data types
         let data_vec: DataVector = data_vec.get_u8_into().unwrap_err();
@@ -115,31 +162,48 @@ fn test_get_i8_into() {
 
         // Extract the internal vector with the good data type
         let data_2: Vec<i8> = data_vec.get_i8_into().unwrap();
-        let ptr_2 : *const i8 = data_2.as_ptr();
+        let ptr_2: *const i8 = data_2.as_ptr();
 
-        assert_eq!(vec![1, 2, 3],           data_2);
+        assert_eq!(vec![1, 2, 3], data_2);
         // No copy of the buffer has been done
-        assert_eq!(ptr_1,                   ptr_2);
+        assert_eq!(ptr_1, ptr_2);
     }
 }
 
-
 #[test]
 fn test_get_u8_into() {
-    assert_eq!(Err(DataVector::I8(vec![1, 2, 3])),          DataVector::I8(vec![1, 2, 3]).get_u8_into());
-    assert_eq!(Ok(vec![1, 2, 3]),                           DataVector::U8(vec![1, 2, 3]).get_u8_into());
-    assert_eq!(Err(DataVector::I16(vec![1, 2, 3])),         DataVector::I16(vec![1, 2, 3]).get_u8_into());
-    assert_eq!(Err(DataVector::I32(vec![1, 2, 3])),         DataVector::I32(vec![1, 2, 3]).get_u8_into());
-    assert_eq!(Err(DataVector::F32(vec![1.0, 2.0, 3.0])),   DataVector::F32(vec![1.0, 2.0, 3.0]).get_u8_into());
-    assert_eq!(Err(DataVector::F64(vec![1.0, 2.0, 3.0])),   DataVector::F64(vec![1.0, 2.0, 3.0]).get_u8_into());
+    assert_eq!(
+        Err(DataVector::I8(vec![1, 2, 3])),
+        DataVector::I8(vec![1, 2, 3]).get_u8_into()
+    );
+    assert_eq!(
+        Ok(vec![1, 2, 3]),
+        DataVector::U8(vec![1, 2, 3]).get_u8_into()
+    );
+    assert_eq!(
+        Err(DataVector::I16(vec![1, 2, 3])),
+        DataVector::I16(vec![1, 2, 3]).get_u8_into()
+    );
+    assert_eq!(
+        Err(DataVector::I32(vec![1, 2, 3])),
+        DataVector::I32(vec![1, 2, 3]).get_u8_into()
+    );
+    assert_eq!(
+        Err(DataVector::F32(vec![1.0, 2.0, 3.0])),
+        DataVector::F32(vec![1.0, 2.0, 3.0]).get_u8_into()
+    );
+    assert_eq!(
+        Err(DataVector::F64(vec![1.0, 2.0, 3.0])),
+        DataVector::F64(vec![1.0, 2.0, 3.0]).get_u8_into()
+    );
 
     {
-        let data_1: Vec<u8> = vec![1, 2 ,3];
-        let ptr_1 : *const u8 = data_1.as_ptr();
+        let data_1: Vec<u8> = vec![1, 2, 3];
+        let ptr_1: *const u8 = data_1.as_ptr();
 
         // Frirst create a `DataVector::I8`
         let data_vec: DataVector = DataVector::U8(data_1);
-        assert_eq!(DataType::U8,            data_vec.data_type());
+        assert_eq!(DataType::U8, data_vec.data_type());
 
         // Try to extract the internal vector with the wrong data types
         let data_vec: DataVector = data_vec.get_i8_into().unwrap_err();
@@ -150,29 +214,47 @@ fn test_get_u8_into() {
 
         // Extract the internal vector with the good data type
         let data_2: Vec<u8> = data_vec.get_u8_into().unwrap();
-        let ptr_2 : *const u8 = data_2.as_ptr();
+        let ptr_2: *const u8 = data_2.as_ptr();
 
-        assert_eq!(vec![1, 2, 3],           data_2);
+        assert_eq!(vec![1, 2, 3], data_2);
         // No copy of the buffer has been done
-        assert_eq!(ptr_1,                   ptr_2);
+        assert_eq!(ptr_1, ptr_2);
     }
 }
 
 #[test]
 fn test_get_i16_into() {
-    assert_eq!(Err(DataVector::I8(vec![1, 2, 3])),          DataVector::I8(vec![1, 2, 3]).get_i16_into());
-    assert_eq!(Err(DataVector::U8(vec![1, 2, 3])),          DataVector::U8(vec![1, 2, 3]).get_i16_into());
-    assert_eq!(Ok(vec![1, 2, 3]),                           DataVector::I16(vec![1, 2, 3]).get_i16_into());
-    assert_eq!(Err(DataVector::I32(vec![1, 2, 3])),         DataVector::I32(vec![1, 2, 3]).get_i16_into());
-    assert_eq!(Err(DataVector::F32(vec![1.0, 2.0, 3.0])),   DataVector::F32(vec![1.0, 2.0, 3.0]).get_i16_into());
-    assert_eq!(Err(DataVector::F64(vec![1.0, 2.0, 3.0])),   DataVector::F64(vec![1.0, 2.0, 3.0]).get_i16_into());
+    assert_eq!(
+        Err(DataVector::I8(vec![1, 2, 3])),
+        DataVector::I8(vec![1, 2, 3]).get_i16_into()
+    );
+    assert_eq!(
+        Err(DataVector::U8(vec![1, 2, 3])),
+        DataVector::U8(vec![1, 2, 3]).get_i16_into()
+    );
+    assert_eq!(
+        Ok(vec![1, 2, 3]),
+        DataVector::I16(vec![1, 2, 3]).get_i16_into()
+    );
+    assert_eq!(
+        Err(DataVector::I32(vec![1, 2, 3])),
+        DataVector::I32(vec![1, 2, 3]).get_i16_into()
+    );
+    assert_eq!(
+        Err(DataVector::F32(vec![1.0, 2.0, 3.0])),
+        DataVector::F32(vec![1.0, 2.0, 3.0]).get_i16_into()
+    );
+    assert_eq!(
+        Err(DataVector::F64(vec![1.0, 2.0, 3.0])),
+        DataVector::F64(vec![1.0, 2.0, 3.0]).get_i16_into()
+    );
     {
-        let data_1: Vec<i16> = vec![1, 2 ,3];
-        let ptr_1 : *const i16 = data_1.as_ptr();
+        let data_1: Vec<i16> = vec![1, 2, 3];
+        let ptr_1: *const i16 = data_1.as_ptr();
 
         // Frirst create a `DataVector::I8`
         let data_vec: DataVector = DataVector::I16(data_1);
-        assert_eq!(DataType::I16,            data_vec.data_type());
+        assert_eq!(DataType::I16, data_vec.data_type());
 
         // Try to extract the internal vector with the wrong data types
         let data_vec: DataVector = data_vec.get_i8_into().unwrap_err();
@@ -183,29 +265,47 @@ fn test_get_i16_into() {
 
         // Extract the internal vector with the good data type
         let data_2: Vec<i16> = data_vec.get_i16_into().unwrap();
-        let ptr_2 : *const i16 = data_2.as_ptr();
+        let ptr_2: *const i16 = data_2.as_ptr();
 
-        assert_eq!(vec![1, 2, 3],           data_2);
+        assert_eq!(vec![1, 2, 3], data_2);
         // No copy of the buffer has been done
-        assert_eq!(ptr_1,                   ptr_2);
+        assert_eq!(ptr_1, ptr_2);
     }
 }
 
 #[test]
 fn test_get_i32_into() {
-    assert_eq!(Err(DataVector::I8(vec![1, 2, 3])),          DataVector::I8(vec![1, 2, 3]).get_i32_into());
-    assert_eq!(Err(DataVector::U8(vec![1, 2, 3])),          DataVector::U8(vec![1, 2, 3]).get_i32_into());
-    assert_eq!(Err(DataVector::I16(vec![1, 2, 3])),         DataVector::I16(vec![1, 2, 3]).get_i32_into());
-    assert_eq!(Ok(vec![1, 2, 3]),                           DataVector::I32(vec![1, 2, 3]).get_i32_into());
-    assert_eq!(Err(DataVector::F32(vec![1.0, 2.0, 3.0])),   DataVector::F32(vec![1.0, 2.0, 3.0]).get_i32_into());
-    assert_eq!(Err(DataVector::F64(vec![1.0, 2.0, 3.0])),   DataVector::F64(vec![1.0, 2.0, 3.0]).get_i32_into());
+    assert_eq!(
+        Err(DataVector::I8(vec![1, 2, 3])),
+        DataVector::I8(vec![1, 2, 3]).get_i32_into()
+    );
+    assert_eq!(
+        Err(DataVector::U8(vec![1, 2, 3])),
+        DataVector::U8(vec![1, 2, 3]).get_i32_into()
+    );
+    assert_eq!(
+        Err(DataVector::I16(vec![1, 2, 3])),
+        DataVector::I16(vec![1, 2, 3]).get_i32_into()
+    );
+    assert_eq!(
+        Ok(vec![1, 2, 3]),
+        DataVector::I32(vec![1, 2, 3]).get_i32_into()
+    );
+    assert_eq!(
+        Err(DataVector::F32(vec![1.0, 2.0, 3.0])),
+        DataVector::F32(vec![1.0, 2.0, 3.0]).get_i32_into()
+    );
+    assert_eq!(
+        Err(DataVector::F64(vec![1.0, 2.0, 3.0])),
+        DataVector::F64(vec![1.0, 2.0, 3.0]).get_i32_into()
+    );
     {
-        let data_1: Vec<i32> = vec![1, 2 ,3];
-        let ptr_1 : *const i32 = data_1.as_ptr();
+        let data_1: Vec<i32> = vec![1, 2, 3];
+        let ptr_1: *const i32 = data_1.as_ptr();
 
         // Frirst create a `DataVector::I32`
         let data_vec: DataVector = DataVector::I32(data_1);
-        assert_eq!(DataType::I32,            data_vec.data_type());
+        assert_eq!(DataType::I32, data_vec.data_type());
 
         // Try to extract the internal vector with the wrong data types
         let data_vec: DataVector = data_vec.get_i8_into().unwrap_err();
@@ -216,29 +316,47 @@ fn test_get_i32_into() {
 
         // Extract the internal vector with the good data type
         let data_2: Vec<i32> = data_vec.get_i32_into().unwrap();
-        let ptr_2 : *const i32 = data_2.as_ptr();
+        let ptr_2: *const i32 = data_2.as_ptr();
 
-        assert_eq!(vec![1, 2, 3],           data_2);
+        assert_eq!(vec![1, 2, 3], data_2);
         // No copy of the buffer has been done
-        assert_eq!(ptr_1,                   ptr_2);
+        assert_eq!(ptr_1, ptr_2);
     }
 }
 
 #[test]
 fn test_get_f32_into() {
-    assert_eq!(Err(DataVector::I8(vec![1, 2, 3])),          DataVector::I8(vec![1, 2, 3]).get_f32_into());
-    assert_eq!(Err(DataVector::U8(vec![1, 2, 3])),          DataVector::U8(vec![1, 2, 3]).get_f32_into());
-    assert_eq!(Err(DataVector::I16(vec![1, 2, 3])),         DataVector::I16(vec![1, 2, 3]).get_f32_into());
-    assert_eq!(Err(DataVector::I32(vec![1, 2, 3])),         DataVector::I32(vec![1, 2, 3]).get_f32_into());
-    assert_eq!(Ok(vec![1.0, 2.0, 3.0]),                     DataVector::F32(vec![1.0, 2.0, 3.0]).get_f32_into());
-    assert_eq!(Err(DataVector::F64(vec![1.0, 2.0, 3.0])),   DataVector::F64(vec![1.0, 2.0, 3.0]).get_f32_into());
+    assert_eq!(
+        Err(DataVector::I8(vec![1, 2, 3])),
+        DataVector::I8(vec![1, 2, 3]).get_f32_into()
+    );
+    assert_eq!(
+        Err(DataVector::U8(vec![1, 2, 3])),
+        DataVector::U8(vec![1, 2, 3]).get_f32_into()
+    );
+    assert_eq!(
+        Err(DataVector::I16(vec![1, 2, 3])),
+        DataVector::I16(vec![1, 2, 3]).get_f32_into()
+    );
+    assert_eq!(
+        Err(DataVector::I32(vec![1, 2, 3])),
+        DataVector::I32(vec![1, 2, 3]).get_f32_into()
+    );
+    assert_eq!(
+        Ok(vec![1.0, 2.0, 3.0]),
+        DataVector::F32(vec![1.0, 2.0, 3.0]).get_f32_into()
+    );
+    assert_eq!(
+        Err(DataVector::F64(vec![1.0, 2.0, 3.0])),
+        DataVector::F64(vec![1.0, 2.0, 3.0]).get_f32_into()
+    );
     {
-        let data_1: Vec<f32> = vec![1.0, 2.0 ,3.0];
-        let ptr_1 : *const f32 = data_1.as_ptr();
+        let data_1: Vec<f32> = vec![1.0, 2.0, 3.0];
+        let ptr_1: *const f32 = data_1.as_ptr();
 
         // Frirst create a `DataVector::I32`
         let data_vec: DataVector = DataVector::F32(data_1);
-        assert_eq!(DataType::F32,            data_vec.data_type());
+        assert_eq!(DataType::F32, data_vec.data_type());
 
         // Try to extract the internal vector with the wrong data types
         let data_vec: DataVector = data_vec.get_i8_into().unwrap_err();
@@ -249,29 +367,47 @@ fn test_get_f32_into() {
 
         // Extract the internal vector with the good data type
         let data_2: Vec<f32> = data_vec.get_f32_into().unwrap();
-        let ptr_2 : *const f32 = data_2.as_ptr();
+        let ptr_2: *const f32 = data_2.as_ptr();
 
-        assert_eq!(vec![1.0, 2.0, 3.0],           data_2);
+        assert_eq!(vec![1.0, 2.0, 3.0], data_2);
         // No copy of the buffer has been done
-        assert_eq!(ptr_1,                   ptr_2);
+        assert_eq!(ptr_1, ptr_2);
     }
 }
 
 #[test]
 fn test_get_f64_into() {
-    assert_eq!(Err(DataVector::I8(vec![1, 2, 3])),          DataVector::I8(vec![1, 2, 3]).get_f64_into());
-    assert_eq!(Err(DataVector::U8(vec![1, 2, 3])),          DataVector::U8(vec![1, 2, 3]).get_f64_into());
-    assert_eq!(Err(DataVector::I16(vec![1, 2, 3])),         DataVector::I16(vec![1, 2, 3]).get_f64_into());
-    assert_eq!(Err(DataVector::I32(vec![1, 2, 3])),         DataVector::I32(vec![1, 2, 3]).get_f64_into());
-    assert_eq!(Err(DataVector::F32(vec![1.0, 2.0, 3.0])),   DataVector::F32(vec![1.0, 2.0, 3.0]).get_f64_into());
-    assert_eq!(Ok(vec![1.0, 2.0, 3.0]),                     DataVector::F64(vec![1.0, 2.0, 3.0]).get_f64_into());
+    assert_eq!(
+        Err(DataVector::I8(vec![1, 2, 3])),
+        DataVector::I8(vec![1, 2, 3]).get_f64_into()
+    );
+    assert_eq!(
+        Err(DataVector::U8(vec![1, 2, 3])),
+        DataVector::U8(vec![1, 2, 3]).get_f64_into()
+    );
+    assert_eq!(
+        Err(DataVector::I16(vec![1, 2, 3])),
+        DataVector::I16(vec![1, 2, 3]).get_f64_into()
+    );
+    assert_eq!(
+        Err(DataVector::I32(vec![1, 2, 3])),
+        DataVector::I32(vec![1, 2, 3]).get_f64_into()
+    );
+    assert_eq!(
+        Err(DataVector::F32(vec![1.0, 2.0, 3.0])),
+        DataVector::F32(vec![1.0, 2.0, 3.0]).get_f64_into()
+    );
+    assert_eq!(
+        Ok(vec![1.0, 2.0, 3.0]),
+        DataVector::F64(vec![1.0, 2.0, 3.0]).get_f64_into()
+    );
     {
-        let data_1: Vec<f64> = vec![1.0, 2.0 ,3.0];
-        let ptr_1 : *const f64 = data_1.as_ptr();
+        let data_1: Vec<f64> = vec![1.0, 2.0, 3.0];
+        let ptr_1: *const f64 = data_1.as_ptr();
 
         // Frirst create a `DataVector::I32`
         let data_vec: DataVector = DataVector::F64(data_1);
-        assert_eq!(DataType::F64,            data_vec.data_type());
+        assert_eq!(DataType::F64, data_vec.data_type());
 
         // Try to extract the internal vector with the wrong data types
         let data_vec: DataVector = data_vec.get_i8_into().unwrap_err();
@@ -282,11 +418,11 @@ fn test_get_f64_into() {
 
         // Extract the internal vector with the good data type
         let data_2: Vec<f64> = data_vec.get_f64_into().unwrap();
-        let ptr_2 : *const f64 = data_2.as_ptr();
+        let ptr_2: *const f64 = data_2.as_ptr();
 
-        assert_eq!(vec![1.0, 2.0, 3.0],           data_2);
+        assert_eq!(vec![1.0, 2.0, 3.0], data_2);
         // No copy of the buffer has been done
-        assert_eq!(ptr_1,                   ptr_2);
+        assert_eq!(ptr_1, ptr_2);
     }
 }
 
