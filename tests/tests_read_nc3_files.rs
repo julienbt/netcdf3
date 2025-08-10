@@ -77,7 +77,6 @@ const TEMP_F64_VAR_DATA: [f64; 30] = [
 ];
 const TEMP_F64_VAR_LEN: usize = TEMP_F64_VAR_DATA.len();
 
-
 fn check_nc3_classic_data(mut file_reader: &mut FileReader) {
     // Check the NetCDF-3 definition
     // -----------------------------
@@ -119,7 +118,6 @@ fn test_read_file_nc3_classic() {
 #[test]
 /// Test reading a file through an input that implement Seek and Read traits.
 fn test_read_file_nc3_classic_with_seek_read() {
-
     // Create a cursor (implements Seek and Read traits) for reading they NetCDF-3 bytes.
     // ------------------------------
     let cursor = Cursor::new(NC3_CLASSIC_FILE_BYTES);
