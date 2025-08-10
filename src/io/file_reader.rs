@@ -1,6 +1,6 @@
 use std::collections::HashMap;
-use std::convert::TryFrom;
 use std::fmt::Debug;
+use std::convert::TryFrom;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
@@ -27,8 +27,10 @@ use crate::{
 pub trait SeekRead: Seek + Read {}
 impl<T: Seek + Read> SeekRead for T {}
 
-impl Debug for dyn SeekRead {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+impl Debug for dyn SeekRead
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error>
+    {
         write!(f, "{:p}", self)
     }
 }
@@ -285,7 +287,8 @@ impl FileReader {
     }
 
     /// Opens the file and parses the header of the NetCDF-3.
-    pub fn open<P: AsRef<Path>>(input_file_path: P) -> Result<Self, ReadError> {
+    pub fn open<P: AsRef<Path>>(input_file_path: P) -> Result<Self, ReadError>
+    {
         let input_file_path: PathBuf = {
             let mut path = PathBuf::new();
             path.push(input_file_path);
