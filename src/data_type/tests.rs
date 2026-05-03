@@ -35,15 +35,20 @@ fn test_data_type_c_api_name() {
 
 #[test]
 fn test_data_type_try_from_u32() -> Result<(), &'static str> {
-
-    assert_eq!(Err("Invalid value for a NetCDF-3 data type."), DataType::try_from(0_u32));
-    assert_eq!(Ok(DataType::I8),                            DataType::try_from(1_u32));
-    assert_eq!(Ok(DataType::U8),                            DataType::try_from(2_u32));
-    assert_eq!(Ok(DataType::I16),                           DataType::try_from(3_u32));
-    assert_eq!(Ok(DataType::I32),                           DataType::try_from(4_u32));
-    assert_eq!(Ok(DataType::F32),                           DataType::try_from(5_u32));
-    assert_eq!(Ok(DataType::F64),                           DataType::try_from(6_u32));
-    assert_eq!(Err("Invalid value for a NetCDF-3 data type."), DataType::try_from(7_u32));
+    assert_eq!(
+        Err("Invalid value for a NetCDF-3 data type."),
+        DataType::try_from(0_u32)
+    );
+    assert_eq!(Ok(DataType::I8), DataType::try_from(1_u32));
+    assert_eq!(Ok(DataType::U8), DataType::try_from(2_u32));
+    assert_eq!(Ok(DataType::I16), DataType::try_from(3_u32));
+    assert_eq!(Ok(DataType::I32), DataType::try_from(4_u32));
+    assert_eq!(Ok(DataType::F32), DataType::try_from(5_u32));
+    assert_eq!(Ok(DataType::F64), DataType::try_from(6_u32));
+    assert_eq!(
+        Err("Invalid value for a NetCDF-3 data type."),
+        DataType::try_from(7_u32)
+    );
 
     Ok(())
 }

@@ -1,7 +1,7 @@
 #![cfg(test)]
 
-use std::rc::Rc;
 use crate::{Dimension, DimensionType};
+use std::rc::Rc;
 
 #[test]
 fn test_dim_new_fixed_size() {
@@ -33,7 +33,6 @@ fn test_dim_new_unlimited_size() {
 
 #[test]
 fn test_dim_equality() {
-
     // test equality between 2 fixed-size dimension
     {
         let dim_a: Dimension = Dimension::new_fixed_size("name_1", 180).unwrap();

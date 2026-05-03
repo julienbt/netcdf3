@@ -22,32 +22,26 @@ pub const NC_MAX_NAME_SIZE: usize = 256;
 /// ```
 pub fn is_valid_name(name: &str) -> bool {
     // check the first character
-    match name.chars().nth(0) {
+    match name.chars().next() {
         None => {
             // then the name string is empty
             return false;
         }
         Some(c) => {
-            if c.is_ascii() {
-                if !(c.is_alphanumeric() || c == '_') {
-                    return false;
-                }
+            if c.is_ascii() && !(c.is_alphanumeric() || c == '_') {
+                return false;
             }
         }
     }
-    if name.as_bytes().len() > NC_MAX_NAME_SIZE {
+    if name.len() > NC_MAX_NAME_SIZE {
         return false;
     }
     for c in name.chars().skip(1) {
-        if !(c.is_alphanumeric()) {
-            if c.is_ascii() {
-                if !(is_special_1(c) || is_special_2(c)) {
-                    return false;
-                }
-            }
+        if !(c.is_alphanumeric()) && c.is_ascii() && !(is_special_1(c) || is_special_2(c)) {
+            return false;
         }
     }
-    return true;
+    true
 }
 
 /// Returns `true` if the `char` is a NetCDF-3 special1 characters.
@@ -56,7 +50,7 @@ pub fn is_valid_name(name: &str) -> bool {
 /// special1     = '_''.''@''+''-'
 /// ```
 fn is_special_1(chr: char) -> bool {
-    return chr == '_' || chr == '.' || chr == '@' || chr == '+' || chr == '-';
+    chr == '_' || chr == '.' || chr == '@' || chr == '+' || chr == '-'
 }
 
 /// Returns `true` if the `char` is a NetCDF-3 special2 characters.
@@ -68,7 +62,7 @@ fn is_special_1(chr: char) -> bool {
 /// '|' | '}' | '~'
 /// ```
 fn is_special_2(chr: char) -> bool {
-    return chr == ' '
+    chr == ' '
         || chr == '!'
         || chr == '"'
         || chr == '#'
@@ -94,5 +88,5 @@ fn is_special_2(chr: char) -> bool {
         || chr == '{'
         || chr == '|'
         || chr == '}'
-        || chr == '~';
+        || chr == '~'
 }

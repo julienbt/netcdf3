@@ -1,7 +1,7 @@
 mod tests;
 
-use crate::name_string::is_valid_name;
 use crate::data_vector::DataVector;
+use crate::name_string::is_valid_name;
 use crate::DataType;
 
 /// NetCDF-3 attribute
@@ -267,7 +267,7 @@ impl Attribute {
         Attribute::check_attr_name(name)?;
         Ok(Attribute {
             name: name.to_string(),
-            data: data,
+            data,
         })
     }
     /// Creates a new attribute containing i8 data.
@@ -318,6 +318,11 @@ impl Attribute {
     /// Returns the number of elements (the length) of the attribute.
     pub fn len(&self) -> usize {
         self.data.len()
+    }
+
+    /// Returns whether the attribute is empty.
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
     }
 
     /// Returns a reference of the `i8` data or `None` of the attribute has not `i8` data.

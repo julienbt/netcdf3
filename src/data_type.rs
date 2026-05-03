@@ -1,18 +1,17 @@
 mod tests;
 
 /// Name of the `DataType::I8` (a.k.a. `NC_BYTE`) used in the NetCDF C-API.
-const I8_TYPE_C_API_NAME: &'static str = "NC_BYTE";
+const I8_TYPE_C_API_NAME: &str = "NC_BYTE";
 /// Name of the `DataType::U8` (a.k.a. `NC_CHAR`) used in the NetCDF C-API.
-const U8_TYPE_C_API_NAME: &'static str = "NC_CHAR";
+const U8_TYPE_C_API_NAME: &str = "NC_CHAR";
 /// Name of the `DataType::I16` (a.k.a. `NC_SHORT`) used in the NetCDF C-API.
-const I16_TYPE_C_API_NAME: &'static str = "NC_SHORT";
+const I16_TYPE_C_API_NAME: &str = "NC_SHORT";
 /// Name of the `DataType::I32` (a.k.a. `NC_INT`) used in the NetCDF C-API.
-const I32_TYPE_C_API_NAME: &'static str = "NC_INT";
+const I32_TYPE_C_API_NAME: &str = "NC_INT";
 /// Name of the `DataType::F32` (a.k.a. `NC_FLOAT`) used in the NetCDF C-API.
-const F32_TYPE_C_API_NAME: &'static str = "NC_FLOAT";
+const F32_TYPE_C_API_NAME: &str = "NC_FLOAT";
 /// Name of the `DataType::F64` (a.k.a. `NC_DOUBLE`) used in the NetCDF C-API.
-const F64_TYPE_C_API_NAME: &'static str = "NC_DOUBLE";
-
+const F64_TYPE_C_API_NAME: &str = "NC_DOUBLE";
 
 /// All the data types supported by the NetCDF-3 format
 ///
@@ -53,16 +52,19 @@ pub enum DataType {
 }
 
 impl std::fmt::Display for DataType {
-
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "DataType::{}", match self {
-            DataType::I8 => "I8",
-            DataType::U8 => "U8",
-            DataType::I16 => "I16",
-            DataType::I32 => "I32",
-            DataType::F32 => "F32",
-            DataType::F64 => "F64",
-        })
+        write!(
+            f,
+            "DataType::{}",
+            match self {
+                DataType::I8 => "I8",
+                DataType::U8 => "U8",
+                DataType::I16 => "I16",
+                DataType::I32 => "I32",
+                DataType::F32 => "F32",
+                DataType::F64 => "F64",
+            }
+        )
     }
 }
 
@@ -82,7 +84,6 @@ impl std::convert::TryFrom<u32> for DataType {
 }
 
 impl DataType {
-
     /// Returns the size (in bytes) of one element of `DataType`.
     ///
     /// # Example
@@ -106,7 +107,6 @@ impl DataType {
             DataType::F64 => std::mem::size_of::<f64>(),
         }
     }
-
 
     /// Returns the name of the `DataType` commoly used in the NedCDF C API.
     ///
